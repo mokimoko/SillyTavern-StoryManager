@@ -1,0 +1,213 @@
+/* sidebar.css — In-chat left sidebar (Phase 2)
+ * Mirrors the WL sidebar (which sits on the right); StoryManager's slides
+ * in from the LEFT and is a touch wider. Pin support, chat list, quick-assign.
+ * Phase 1: stub.
+ */
+
+/* ============================================================
+   Sidebar — Phase 2 implementation
+   Slides in from the LEFT. Nebula Dark vocabulary, sm-sb- prefix.
+   ============================================================ */
+
+.sm-sb-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 320px;
+    max-width: 88vw;
+    background: rgba(18, 18, 22, 0.97);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 9997;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    pointer-events: none;
+}
+.sm-sb-panel.sm-sb-visible {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* ─── Header ──────────────────────────────────────── */
+
+.sm-sb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+.sm-sb-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.sm-sb-title i { color: rgba(180, 160, 140, 0.7); }
+.sm-sb-header-actions { display: flex; align-items: center; gap: 2px; }
+
+.sm-sb-pin,
+.sm-sb-modal-btn,
+.sm-sb-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    padding: 5px 7px;
+    font-size: 13px;
+    transition: color 0.15s;
+}
+.sm-sb-pin:hover,
+.sm-sb-modal-btn:hover,
+.sm-sb-close:hover { color: rgba(255, 255, 255, 0.8); }
+.sm-sb-pin.sm-sb-pinned { color: rgba(180, 160, 140, 0.95); }
+
+/* ─── Body ────────────────────────────────────────── */
+
+.sm-sb-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--SmartThemeUnderlineColor) transparent;
+}
+.sm-sb-body::-webkit-scrollbar { width: 6px; }
+.sm-sb-body::-webkit-scrollbar-thumb { background-color: var(--SmartThemeUnderlineColor); }
+
+.sm-sb-section { margin-bottom: 16px; }
+
+.sm-sb-current {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.sm-sb-current-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.35);
+}
+.sm-sb-current-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.sm-sb-count {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-left: 4px;
+}
+
+/* ─── Chat list ───────────────────────────────────── */
+
+.sm-sb-chatlist {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.sm-sb-chat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.sm-sb-chat-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sm-sb-chat-name {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-sb-chat-owned .sm-sb-chat-name { color: rgba(255, 255, 255, 0.45); }
+.sm-sb-chat-owner { font-size: 10px; color: rgba(200, 170, 110, 0.8); flex-shrink: 0; }
+
+/* checkbox reuse from modal.css scope — replicate for the sidebar panel */
+.sm-sb-panel input[type='checkbox'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 4px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    border: 2px solid var(--SmartThemeBorderColor);
+    display: grid;
+    place-content: center;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.sm-sb-panel input[type='checkbox']:checked {
+    background-color: var(--SmartThemeQuoteColor);
+}
+
+/* ─── Assign panel ────────────────────────────────── */
+
+.sm-sb-assign {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px;
+    background: rgba(180, 160, 140, 0.06);
+    border: 1px solid rgba(180, 160, 140, 0.18);
+}
+.sm-sb-assign-go { justify-content: center; }
+
+/* ─── Storyline list ──────────────────────────────── */
+
+.sm-sb-sllist {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.sm-sb-sl-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s, border-color 0.15s;
+}
+.sm-sb-sl-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(180, 160, 140, 0.25);
+}
+.sm-sb-sl-row > i { font-size: 12px; color: rgba(180, 160, 140, 0.6); }
+.sm-sb-sl-title {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-sb-sl-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 7px;
+    border-radius: 9px;
+    flex-shrink: 0;
+}
+
+/* ─── Responsive ──────────────────────────────────── */
+
+@media (max-width: 500px) {
+    .sm-sb-panel { width: 86vw; }
+}

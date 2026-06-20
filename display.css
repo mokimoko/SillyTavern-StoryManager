@@ -1,0 +1,1141 @@
+/* display.css — The aesthetic Display view (Phase 4)
+ * Header-less, sidebar-less gallery: book shelf column + storyline grid +
+ * storyline page. Built from the approved mock (story-manager-display-mock.html).
+ * Nebula Dark vocabulary, sm- prefix.
+ *
+ * Production note: unlike the mock (full 100vh viewport), the real display is a
+ * fixed-position overlay appended to <body>, sitting above ST with its own
+ * backdrop. .sm-display is the gallery frame; .sm-display-backdrop dims ST.
+ */
+
+/* ─── Overlay / Backdrop ─────────────────────────── */
+
+.sm-display-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+}
+.sm-display-backdrop.sm-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* ─── Display Container ──────────────────────────── */
+
+.sm-display {
+    position: fixed;
+    inset: 0;
+    transform: none;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10001;
+    background: rgba(18, 18, 22, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    display: flex;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.sm-display.sm-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+.sm-display *, .sm-display *::before, .sm-display *::after {
+    box-sizing: border-box;
+}
+
+/* ─── Close Button ───────────────────────────────── */
+
+.sm-display-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    z-index: 10;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.15s;
+    font-family: inherit;
+}
+.sm-display-close:hover { color: rgba(255, 255, 255, 0.6); }
+
+/* ─── Management Toggle ──────────────────────────── */
+
+.sm-display-manage {
+    position: absolute;
+    bottom: 14px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sm-display-manage:hover {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* ─── Cover backgrounds (real images) ────────────── */
+/* The mock used gradient placeholder classes. Production renders real images
+ * as a background-image on .sm-cover-bg (set inline via style). When a
+ * storyline/book/chat has no image, .sm-cover-empty paints a neutral fill. */
+
+.sm-cover-bg {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.sm-cover-empty {
+    background: linear-gradient(150deg, #1c1c24 0%, #131319 60%, #1a1a22 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.12);
+}
+.sm-cover-empty i { font-size: 1.6em; }
+
+/* ─── Book Shelf (Left Column) ───────────────────── */
+
+.sm-shelf {
+    width: 160px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.15);
+    gap: 0;
+}
+
+.sm-shelf-arrow {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 10px;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+    width: 100%;
+    text-align: center;
+}
+.sm-shelf-arrow:hover { color: rgba(255, 255, 255, 0.5); }
+.sm-shelf-arrow:disabled { opacity: 0.25; cursor: default; }
+
+.sm-shelf-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+.sm-shelf-list::-webkit-scrollbar { display: none; }
+
+.sm-shelf-book {
+    position: relative;
+    width: 110px;
+    height: 147px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.sm-shelf-book:hover { border-color: rgba(180, 160, 140, 0.3); }
+.sm-shelf-book.sm-shelf-active {
+    border-color: rgba(180, 160, 140, 0.5);
+    box-shadow: 0 0 12px rgba(180, 160, 140, 0.08);
+}
+
+/* Hover tooltip for book title */
+.sm-shelf-book .sm-shelf-tooltip {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(12, 12, 16, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    padding: 5px 10px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 20;
+}
+.sm-shelf-book:hover .sm-shelf-tooltip { opacity: 1; }
+
+/* "All storylines" pseudo-book at the top of the shelf */
+.sm-shelf-all {
+    width: 110px;
+    height: 147px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.3);
+    transition: border-color 0.2s, color 0.2s;
+    position: relative;
+}
+.sm-shelf-all i { font-size: 22px; }
+.sm-shelf-all span { font-size: 10px; letter-spacing: 0.3px; }
+.sm-shelf-all:hover { border-color: rgba(180, 160, 140, 0.3); color: rgba(255, 255, 255, 0.55); }
+.sm-shelf-all.sm-shelf-active {
+    border-color: rgba(180, 160, 140, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 12px rgba(180, 160, 140, 0.08);
+}
+
+/* ─── Book Detail Panel (between shelf + grid) ──── */
+/* Shown only when a specific book is selected; collapses to 0 for "All". */
+
+.sm-book-detail {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.25s ease, opacity 0.2s ease 0.05s;
+    border-right: 1px solid transparent;
+    background: rgba(0, 0, 0, 0.08);
+}
+.sm-book-detail.sm-book-detail-visible {
+    width: 350px;
+    opacity: 1;
+    border-right-color: rgba(255, 255, 255, 0.04);
+}
+
+.sm-book-detail-inner {
+    width: 350px;              /* fixed inner so content doesn't reflow during transition */
+    padding: 20px 18px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 160, 140, 0.12) transparent;
+}
+.sm-book-detail-inner::-webkit-scrollbar { width: 4px; }
+.sm-book-detail-inner::-webkit-scrollbar-track { background: transparent; }
+.sm-book-detail-inner::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.12); }
+
+/* Cover — large, 3:4 ratio */
+.sm-book-detail-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    margin-bottom: 14px;
+    flex-shrink: 0;
+}
+.sm-book-detail-cover .sm-cover-bg,
+.sm-book-detail-cover .sm-cover-empty {
+    height: 100%;
+}
+.sm-book-detail-cover .sm-cover-empty i {
+    font-size: 2.4em;
+}
+
+/* Title + count beneath cover */
+.sm-book-detail-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.35;
+    margin-bottom: 3px;
+}
+.sm-book-detail-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 16px;
+}
+
+/* Sections (Tags, Description) */
+.sm-book-detail-section {
+    margin-bottom: 16px;
+}
+.sm-book-detail-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.25);
+    margin-bottom: 8px;
+}
+
+/* ST tag pills — colour-coded, using the same CSS var pattern as stTagPicker */
+.sm-book-detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.sm-book-detail-tag {
+    display: inline-block;
+    padding: 3px 9px;
+    font-size: 11px;
+    background: var(--sttag-bg, rgba(255,255,255,0.08));
+    color: var(--sttag-fg, rgba(255,255,255,0.85));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+}
+
+/* Description */
+.sm-book-detail-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.65;
+}
+.sm-book-detail-desc.sm-muted {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── Main Area ──────────────────────────────────── */
+
+.sm-display-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ─── Grid Header (book title + search) ──────────── */
+
+.sm-grid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px 12px;
+    flex-shrink: 0;
+}
+.sm-grid-book-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.3px;
+}
+.sm-grid-book-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 2px;
+}
+
+.sm-display-search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 5px 11px;
+    width: 220px;
+    flex-shrink: 0;
+    margin-right: 32px; /* clear the ✕ close button */
+}
+.sm-display-search i { color: rgba(255, 255, 255, 0.2); font-size: 12px; }
+.sm-display-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-family: inherit;
+    width: 100%;
+}
+.sm-display-search input::placeholder { color: rgba(255, 255, 255, 0.2); }
+
+/* ─── Storyline Grid ─────────────────────────────── */
+
+.sm-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 24px 60px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 160, 140, 0.15) transparent;
+}
+
+.sm-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.sm-grid-card {
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.2s;
+    position: relative;
+}
+.sm-grid-card:hover { transform: translateY(-2px); }
+
+.sm-grid-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: border-color 0.2s;
+    position: relative;
+}
+.sm-grid-card:hover .sm-grid-cover { border-color: rgba(180, 160, 140, 0.3); }
+
+/* Chat count badge on cover */
+.sm-grid-count {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.sm-grid-info { padding: 8px 2px 4px; }
+.sm-grid-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-grid-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ─── Tag Pills (shared between grid + page) ─────── */
+
+.sm-dtag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.sm-dtag-character { background: rgba(120, 150, 200, 0.15); border-color: rgba(120, 150, 200, 0.28); color: rgba(160, 185, 220, 0.9); }
+.sm-dtag-persona   { background: rgba(180, 140, 200, 0.15); border-color: rgba(180, 140, 200, 0.28); color: rgba(200, 170, 220, 0.9); }
+.sm-dtag-npc       { background: rgba(200, 170, 110, 0.15); border-color: rgba(200, 170, 110, 0.28); color: rgba(210, 185, 130, 0.9); }
+.sm-dtag-freeform  { background: rgba(140, 180, 150, 0.15); border-color: rgba(140, 180, 150, 0.28); color: rgba(165, 200, 170, 0.9); }
+
+/* ─── Grid Card Tooltip (hover description) ──────── */
+
+.sm-grid-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    background: rgba(12, 12, 16, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 12px;
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.sm-grid-card:hover .sm-grid-tooltip { opacity: 1; }
+.sm-grid-tooltip-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 4px;
+}
+.sm-grid-tooltip-timespan {
+    font-size: 10px;
+    color: rgba(180, 160, 140, 0.6);
+    margin-bottom: 6px;
+}
+.sm-grid-tooltip-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.55;
+    max-height: 100px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+.sm-grid-tooltip-desc.sm-muted { font-style: italic; color: rgba(255, 255, 255, 0.3); }
+
+/* ─── Empty / muted helpers ──────────────────────── */
+.sm-muted { color: rgba(255, 255, 255, 0.3); font-style: italic; }
+
+/* ─── Storyline Page ─────────────────────────────── */
+
+.sm-page {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 60px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 160, 140, 0.15) transparent;
+}
+
+.sm-page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+.sm-page-back:hover { color: rgba(255, 255, 255, 0.7); }
+
+/* Hero banner */
+.sm-page-hero {
+    width: 100%;
+    height: 220px;
+    position: relative;
+    overflow: hidden;
+}
+.sm-page-hero .sm-cover-bg {
+    opacity: 0.4;
+}
+.sm-page-hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 280px;
+    background: linear-gradient(transparent, rgba(18, 18, 22, 0.97));
+}
+
+/* Cover + info row — overlaps the hero */
+.sm-page-meta {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    margin-top: -210px;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 20px;
+}
+
+.sm-page-cover {
+    width: 260px;
+    height: 347px; /* 3:4 ratio — matches book cover exactly */
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45);
+}
+
+.sm-page-cover .sm-cover-bg,
+.sm-page-cover .sm-cover-empty {
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.sm-page-info {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0;
+}
+
+.sm-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: 0.2px;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+/* Page body content */
+.sm-page-body { padding: 16px 24px 24px; }
+
+.sm-page-timespan {
+    font-size: 11px;
+    color: rgba(180, 160, 140, 0.55);
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+}
+.sm-page-desc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.65;
+    margin-bottom: 18px;
+}
+.sm-page-desc.sm-muted { max-width: none; }
+
+.sm-page-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 22px;
+}
+.sm-page-tags .sm-dtag { font-size: 11px; padding: 3px 9px; }
+
+.sm-page-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 0 0 18px;
+}
+
+/* ─── Chat List (on storyline page) ──────────────── */
+
+.sm-page-chats-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.sm-page-chat {
+    display: flex;
+    gap: 14px;
+    padding: 10px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: background 0.12s;
+    margin: 0 -4px;
+}
+.sm-page-chat:hover { background: rgba(255, 255, 255, 0.02); }
+.sm-page-chat:last-child { border-bottom: none; }
+
+.sm-page-chat-order {
+    width: 22px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(180, 160, 140, 0.4);
+    padding-top: 2px;
+}
+
+.sm-page-chat-thumb {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.sm-page-chat-thumb-empty {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.1);
+    font-size: 16px;
+}
+
+.sm-page-chat-body { flex: 1; min-width: 0; }
+.sm-page-chat-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-page-chat-blurb {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-page-chat-blurb.sm-muted { font-style: italic; color: rgba(255, 255, 255, 0.25); }
+
+.sm-page-chat-chrono {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: rgba(180, 160, 140, 0.45);
+    font-style: italic;
+    padding-top: 2px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ─── Chat Hover Detail Panel ────────────────────── */
+/* Positioned near the cursor by JS (display/index.js). */
+
+.sm-chat-detail {
+    position: fixed;
+    z-index: 10010;
+    display: flex;
+    gap: 0;
+    background: rgba(12, 12, 16, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s;
+    max-width: 480px;
+}
+.sm-chat-detail.sm-chat-detail-visible { opacity: 1; }
+
+/* With image: side-by-side layout */
+.sm-chat-detail-img {
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Without image: text-only, narrower */
+.sm-chat-detail-text-only { max-width: 320px; }
+
+.sm-chat-detail-text {
+    flex: 1;
+    padding: 12px 14px;
+    max-height: 140px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+.sm-chat-detail-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2px;
+}
+.sm-chat-detail-chrono {
+    font-size: 10px;
+    color: rgba(180, 160, 140, 0.45);
+    font-style: italic;
+    margin-bottom: 8px;
+}
+.sm-chat-detail-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.6;
+}
+.sm-chat-detail-desc.sm-muted { color: rgba(255, 255, 255, 0.3); }
+
+/* ─── Empty states ───────────────────────────────── */
+
+.sm-display-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+    padding: 0 24px;
+}
+.sm-display-empty-icon { font-size: 32px; opacity: 0.5; }
+.sm-display-empty-text { font-size: 13px; }
+.sm-display-empty-hint { font-size: 11px; color: rgba(255, 255, 255, 0.15); }
+
+/* ─── Scrollbars ─────────────────────────────────── */
+.sm-grid::-webkit-scrollbar,
+.sm-page::-webkit-scrollbar { width: 5px; }
+.sm-grid::-webkit-scrollbar-track,
+.sm-page::-webkit-scrollbar-track { background: transparent; }
+.sm-grid::-webkit-scrollbar-thumb,
+.sm-page::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.15); }
+.sm-grid::-webkit-scrollbar-thumb:hover,
+.sm-page::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 140, 0.3); }
+
+/* ─── Playlist Panel (DAR integration) ───────────── */
+/* Shown on the storyline page when a Dynamic Audio playlist is linked.
+ * Side-by-side layout: chats on the left, cover art on the right.
+ * Cover is generous (300px square) — "showing off the art is half the fun." */
+
+.sm-page-chats-section {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+}
+
+.sm-page-chats-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.sm-page-playlist-panel {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 20px;
+}
+
+.sm-page-playlist-cover {
+    width: 300px;
+    height: 300px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+}
+
+.sm-page-playlist-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sm-page-playlist-empty {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(150deg, #1c1c24 0%, #131319 60%, #1a1a22 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.1);
+    font-size: 48px;
+}
+
+/* Play button — overlaid on cover, appears on hover */
+.sm-page-playlist-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    padding: 0;
+    outline: none;
+}
+
+.sm-page-playlist-play i {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.sm-page-playlist-cover:hover .sm-page-playlist-play i {
+    opacity: 1;
+}
+
+.sm-page-playlist-play:active i {
+    transform: scale(0.92);
+}
+
+
+/* ─── Chat Expander + Detail Panel ───────────────── */
+/* "See more" chevron on each chat row; expands an accordion below
+ * the row showing gallery images and quotes. Lazy-loaded on first click. */
+
+.sm-page-chat-wrapper {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.sm-page-chat-wrapper:last-child { border-bottom: none; }
+
+/* Remove the border from .sm-page-chat itself since the wrapper now owns it. */
+.sm-page-chat-wrapper .sm-page-chat {
+    border-bottom: none;
+}
+
+.sm-page-chat-expand {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: color 0.15s, transform 0.2s, border-color 0.15s;
+    padding: 0;
+    font-size: 11px;
+    align-self: center;
+}
+.sm-page-chat-expand:hover {
+    color: rgba(255, 255, 255, 0.45);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Goto button — opens the chat in ST */
+.sm-page-chat-goto {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    padding: 0;
+    font-size: 11px;
+    align-self: center;
+}
+.sm-page-chat-goto:hover {
+    color: rgba(180, 160, 140, 0.7);
+    border-color: rgba(180, 160, 140, 0.2);
+}
+
+/* Expandable rows get a pointer and a subtle hover cue */
+.sm-page-chat.sm-chat-expandable {
+    cursor: pointer;
+}
+/* Subtle dot indicator when chat has stored images/quotes */
+.sm-page-chat-expand.sm-has-details {
+    color: rgba(180, 160, 140, 0.35);
+}
+.sm-page-chat-expand.sm-has-details:hover {
+    color: rgba(180, 160, 140, 0.7);
+}
+
+/* Rotated chevron when expanded */
+.sm-page-chat-expand.sm-expanded {
+    transform: rotate(180deg);
+    color: rgba(180, 160, 140, 0.55);
+}
+
+/* ─── Detail Panel (accordion body) ──────────────── */
+
+.sm-page-chat-details {
+    padding: 0 4px 14px 40px; /* indent past the order number column */
+    animation: sm-details-slide 0.2s ease;
+}
+.sm-page-chat-details[hidden] { display: none; }
+
+@keyframes sm-details-slide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sm-page-details-loading {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    font-style: italic;
+    padding: 8px 0;
+}
+
+.sm-page-details-empty {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    padding: 8px 0;
+}
+
+.sm-page-details-section {
+    margin-bottom: 14px;
+}
+.sm-page-details-section:last-child { margin-bottom: 0; }
+
+.sm-page-details-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.25);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sm-page-details-label i { font-size: 10px; }
+
+/* ─── Gallery Strip (horizontal scroll) ──────────── */
+
+.sm-page-details-gallery {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 160, 140, 0.12) transparent;
+}
+.sm-page-details-gallery::-webkit-scrollbar { height: 4px; }
+.sm-page-details-gallery::-webkit-scrollbar-track { background: transparent; }
+.sm-page-details-gallery::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.12); }
+
+.sm-page-details-img {
+    flex-shrink: 0;
+    width: 120px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.15s;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.sm-page-details-img:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    border-color: rgba(180, 160, 140, 0.25);
+}
+
+.sm-page-details-img img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.sm-page-details-img-caption {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 4px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ─── Quotes ─────────────────────────────────────── */
+
+.sm-page-details-quotes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sm-page-details-quote {
+    margin: 0;
+    padding: 10px 14px;
+    border-left: 2px solid rgba(180, 160, 140, 0.25);
+    background: rgba(255, 255, 255, 0.015);
+}
+
+/* Auto-pulled quotes get a slightly different accent */
+.sm-page-details-quote.sm-quote-auto {
+    border-left-color: rgba(120, 150, 200, 0.3);
+}
+
+.sm-page-details-quote-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.sm-page-details-quote-speaker {
+    display: block;
+    font-size: 11px;
+    color: rgba(180, 160, 140, 0.55);
+    font-style: normal;
+    margin-top: 6px;
+}
+
+.sm-page-details-quote-context {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.2);
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
+/* ─── Lightbox (image full-view overlay) ─────────── */
+
+.sm-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    cursor: pointer;
+}
+.sm-lightbox.sm-lightbox-visible { opacity: 1; }
+
+.sm-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.sm-lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sm-lightbox-content img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.sm-lightbox-caption {
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    max-width: 500px;
+}
+
+/* ─── Detail Panel Close Button ──────────────────── */
+
+.sm-page-details-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+.sm-page-details-close:hover { color: rgba(255, 255, 255, 0.5); }
+.sm-page-details-close i { font-size: 9px; }

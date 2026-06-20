@@ -1,0 +1,1117 @@
+/* ============================================================
+   StoryManager — Modal Styles (Phase 2)
+   Nebula Dark aesthetic: dark transparency, muted taupe accent.
+   Mirrors SimpleSummarizer's modal vocabulary (Chat Design pattern).
+   Prefix: sm-
+   ============================================================ */
+
+/* ─── Overlay ─────────────────────────────────────── */
+
+.sm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.sm-overlay.sm-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ─── Modal ───────────────────────────────────────── */
+
+.sm-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: min(900px, 93vw);
+    height: min(720px, 90vh);
+    background: rgba(18, 18, 22, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    overflow: hidden;
+}
+.sm-modal.sm-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* ─── Header ──────────────────────────────────────── */
+
+.sm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+.sm-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sm-title i { color: rgba(180, 160, 140, 0.7); }
+
+.sm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Display toggle — the [Display ⇄] button in the header */
+.sm-display-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    background: rgba(180, 160, 140, 0.14);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(180, 160, 140, 0.22);
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.sm-display-toggle:hover {
+    background: rgba(180, 160, 140, 0.26);
+    color: rgba(255, 255, 255, 0.92);
+}
+.sm-display-toggle i { font-size: 11px; }
+
+.sm-close {
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 16px;
+    padding: 4px 6px;
+    transition: color 0.15s;
+}
+.sm-close:hover { color: rgba(255, 255, 255, 0.8); }
+
+/* ─── Body / Sidebar / Content ────────────────────── */
+
+.sm-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sm-sidebar {
+    width: 56px;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.sm-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color 0.15s, background 0.15s;
+    border-left: 2px solid transparent;
+}
+.sm-nav-item:hover {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.03);
+}
+.sm-nav-item.sm-nav-active {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.06);
+    border-left-color: rgba(180, 160, 140, 0.6);
+}
+.sm-nav-item i { font-size: 18px; }
+
+.sm-content {
+    flex: 1;
+    padding: 16px 20px;
+    overflow-y: auto;
+}
+
+/* ─── Tab Header ──────────────────────────────────── */
+
+.sm-tab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.sm-tab-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+.sm-tab-subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-left: 10px;
+}
+.sm-tab-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* ─── Buttons ─────────────────────────────────────── */
+
+.sm-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.sm-btn-accent {
+    background: rgba(180, 160, 140, 0.2);
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(180, 160, 140, 0.25);
+}
+.sm-btn-accent:hover {
+    background: rgba(180, 160, 140, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+}
+.sm-btn-ghost {
+    background: none;
+    color: rgba(255, 255, 255, 0.45);
+}
+.sm-btn-ghost:hover {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.04);
+}
+.sm-btn-danger-text { color: rgba(220, 80, 80, 0.6); }
+.sm-btn-danger-text:hover { color: rgba(220, 80, 80, 0.9); }
+
+.sm-btn-icon {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    padding: 3px 5px;
+    font-size: 12px;
+    transition: color 0.15s;
+}
+.sm-btn-icon:hover { color: rgba(255, 255, 255, 0.7); }
+.sm-btn-icon:disabled { opacity: 0.3; cursor: default; }
+
+/* ─── Empty States ────────────────────────────────── */
+
+.sm-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    padding: 24px 0;
+}
+.sm-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+}
+.sm-empty-state i { font-size: 28px; opacity: 0.4; }
+.sm-empty-state p { margin: 0; font-size: 13px; }
+.sm-empty-hint { font-size: 12px; opacity: 0.6; }
+
+/* Inline hint under a section label (e.g. Hero Image explainer). */
+.sm-field-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    margin: -4px 0 8px;
+    line-height: 1.45;
+}
+
+/* ─── Section / Field Labels ──────────────────────── */
+
+.sm-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sm-section-label i {
+    font-size: 12px;
+    color: rgba(180, 160, 140, 0.5);
+}
+.sm-field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Generate button (inline with field label) */
+.sm-gen-btn {
+    all: unset;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: rgba(180, 160, 140, 0.4);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+.sm-gen-btn:hover { color: rgba(180, 160, 140, 0.8); }
+.sm-gen-btn:disabled { opacity: 0.3; cursor: default; }
+.sm-gen-btn i { margin-right: 2px; font-size: 9px; }
+
+/* Status line below description textarea */
+.sm-gen-status {
+    font-size: 11px;
+    margin-top: 4px;
+    min-height: 14px;
+    color: rgba(180, 160, 140, 0.4);
+}
+.sm-gen-status.sm-gen-busy { color: rgba(180, 160, 140, 0.6); }
+.sm-gen-status.sm-gen-ok   { color: rgba(120, 180, 120, 0.6); }
+.sm-gen-status.sm-gen-err  { color: rgba(220, 100, 100, 0.6); }
+.sm-divider-section {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 14px 0;
+}
+
+/* ─── Inputs / Selects / Textareas ────────────────── */
+
+.sm-input,
+.sm-select,
+.sm-textarea {
+    width: 100%;
+    padding: 7px 9px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.sm-input:focus,
+.sm-select:focus,
+.sm-textarea:focus {
+    outline: none;
+    border-color: rgba(180, 160, 140, 0.4);
+}
+.sm-textarea {
+    resize: vertical;
+    line-height: 1.5;
+    min-height: 64px;
+}
+.sm-select { cursor: pointer; }
+.sm-select option {
+    background: rgb(25, 25, 30);
+    color: rgba(255, 255, 255, 0.85);
+}
+.sm-input::placeholder,
+.sm-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.sm-field { margin-bottom: 12px; }
+
+/* ─── Checkbox (theme match) ──────────────────────── */
+
+.sm-modal input[type='checkbox'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: 4px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    border: 2px solid var(--SmartThemeBorderColor);
+    display: grid;
+    place-content: center;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+.sm-modal input[type='checkbox']:active { transform: scale(0.92); }
+.sm-modal input[type='checkbox']:checked {
+    background-color: var(--SmartThemeQuoteColor);
+}
+
+/* ─── Settings rows ───────────────────────────────── */
+
+.sm-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.sm-setting-title {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+.sm-setting-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 1px;
+}
+
+/* ─── Scrollbars (theme match) ────────────────────── */
+
+.sm-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--SmartThemeUnderlineColor) transparent;
+}
+.sm-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    background-color: transparent;
+}
+.sm-content::-webkit-scrollbar-track { background-color: transparent; }
+.sm-content::-webkit-scrollbar-track:hover {
+    background-color: var(--SmartThemeChatTintColor);
+    border-left: 1px solid var(--SmartThemeBorderColor);
+}
+.sm-content::-webkit-scrollbar-thumb {
+    background-color: var(--SmartThemeUnderlineColor);
+}
+.sm-content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--SmartThemeQuoteColor);
+}
+.sm-content::-webkit-scrollbar-button,
+.sm-content::-webkit-scrollbar-corner {
+    display: none;
+    background: transparent;
+}
+
+/* ─── Responsive ──────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .sm-modal {
+        width: 96vw;
+        height: 93vh;
+    }
+    .sm-sidebar { width: 46px; }
+    .sm-nav-item { width: 36px; height: 36px; }
+    .sm-nav-item i { font-size: 15px; }
+    .sm-content { padding: 12px 14px; }
+    .sm-display-toggle span { display: none; }
+}
+
+/* ============================================================
+   Phase 2 — Components & Tab content (appended)
+   ============================================================ */
+
+/* ─── Card list (storyline / book list views) ─────── */
+
+/* ─── List search box (modal tab lists) ───────────── */
+
+.sm-list-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 2px;
+}
+.sm-list-search i {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.sm-list-search .sm-input {
+    flex: 1;
+    font-size: 12px;
+    padding: 6px 9px;
+}
+
+.sm-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.sm-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s, border-color 0.15s;
+}
+.sm-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(180, 160, 140, 0.2);
+}
+.sm-card-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+.sm-card-thumb-empty {
+    display: grid;
+    place-content: center;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 16px;
+}
+.sm-card-body { flex: 1; min-width: 0; }
+.sm-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-card-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 2px;
+}
+.sm-card-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* ─── Form scaffold ───────────────────────────────── */
+
+.sm-form { padding-bottom: 12px; }
+
+/* ─── Tag picker ──────────────────────────────────── */
+
+.sm-tagpicker {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.sm-tag-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sm-tag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 6px;
+    min-height: 22px;
+}
+.sm-tag-empty {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    font-style: italic;
+}
+.sm-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.sm-tag-remove {
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.sm-tag-remove:hover { opacity: 1; }
+
+/* Per-type accent colors (each tag type visually distinct) */
+.sm-tag-character { background: rgba(120, 150, 200, 0.18); border-color: rgba(120, 150, 200, 0.35); }
+.sm-tag-persona   { background: rgba(180, 140, 200, 0.18); border-color: rgba(180, 140, 200, 0.35); }
+.sm-tag-npc       { background: rgba(200, 170, 110, 0.18); border-color: rgba(200, 170, 110, 0.35); }
+.sm-tag-freeform  { background: rgba(140, 180, 150, 0.18); border-color: rgba(140, 180, 150, 0.35); }
+
+.sm-tag-add { display: flex; }
+.sm-tag-input { font-size: 12px; padding: 5px 8px; }
+
+/* ─── Persona multi-select chips ──────────────────── */
+
+.sm-persona-multi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.sm-persona-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    font-size: 12px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.55);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sm-persona-chip:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.8);
+}
+.sm-persona-chip.sm-persona-selected {
+    background: rgba(180, 140, 200, 0.18);
+    border-color: rgba(180, 140, 200, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+}
+.sm-persona-chip i { font-size: 10px; opacity: 0.7; }
+
+/* ─── Image picker ────────────────────────────────── */
+
+.sm-imagepicker {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.sm-image-preview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+.sm-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.sm-image-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 22px;
+}
+.sm-image-empty span { font-size: 11px; }
+.sm-image-clear {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+}
+.sm-image-controls {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+.sm-image-upload-btn { align-self: flex-start; cursor: pointer; }
+.sm-image-path { display: flex; gap: 6px; }
+.sm-image-path-input { flex: 1; font-size: 12px; }
+.sm-image-status { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
+.sm-image-status-error { color: rgba(220, 110, 110, 0.9); }
+
+/* ─── Chronology ──────────────────────────────────── */
+
+.sm-chrono-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.sm-chrono-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.sm-chrono-row.sm-chrono-dragging { opacity: 0.4; }
+.sm-chrono-row.sm-chrono-over { border-color: rgba(180, 160, 140, 0.5); }
+.sm-chrono-handle {
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 12px;
+}
+.sm-chrono-handle:active { cursor: grabbing; }
+.sm-chrono-order {
+    width: 20px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(180, 160, 140, 0.7);
+    flex-shrink: 0;
+}
+.sm-chrono-main { flex: 1; min-width: 0; }
+.sm-chrono-file {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+.sm-chrono-label { font-size: 12px; padding: 4px 7px; }
+
+/* Wrapper holding a chrono row + its (collapsed) per-chat image picker panel. */
+.sm-chrono-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Per-chat image button (thumbnail or placeholder) sitting in the row. */
+.sm-chrono-img {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.3);
+    display: grid;
+    place-content: center;
+    transition: border-color 0.15s, color 0.15s;
+}
+.sm-chrono-img:hover {
+    border-color: rgba(180, 160, 140, 0.4);
+    color: rgba(180, 160, 140, 0.7);
+}
+.sm-chrono-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.sm-chrono-img-empty { font-size: 13px; }
+
+/* Collapsible per-chat image picker, indented to sit under the row body. */
+.sm-chrono-picker {
+    padding: 8px 9px 9px 56px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-top: none;
+}
+
+/* Per-chat blurb: inline text input + gen button sitting below the time label. */
+.sm-chrono-blurb-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+}
+.sm-chrono-blurb {
+    flex: 1;
+    font-size: 11px;
+    padding: 3px 7px;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
+}
+.sm-chrono-blurb::placeholder {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.2);
+}
+.sm-chrono-blurb-gen {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.sm-chrono-blurb-status {
+    font-size: 10px;
+    margin-top: 1px;
+}
+
+/* ─── Chat assignment list ────────────────────────── */
+
+.sm-chat-assign-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.sm-chat-assign-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.sm-chat-assign-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sm-chat-assign-name {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-chat-owned .sm-chat-assign-name { color: rgba(255, 255, 255, 0.5); }
+.sm-chat-owner-badge {
+    font-size: 10px;
+    color: rgba(200, 170, 110, 0.8);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ─── Radio groups (timespan / entry point) ───────── */
+
+.sm-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.sm-radio {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+}
+.sm-radio input[type='radio'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 50%;
+    border: 2px solid var(--SmartThemeBorderColor, rgba(255,255,255,0.3));
+    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.sm-radio input[type='radio']::before {
+    content: '';
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.12s;
+    background-color: var(--SmartThemeQuoteColor, rgba(180,160,140,0.9));
+}
+.sm-radio input[type='radio']:checked::before { transform: scale(1); }
+
+/* ─── Book storyline assignment rows ──────────────── */
+
+.sm-book-selected { margin-bottom: 14px; }
+.sm-book-sl-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 3px;
+}
+.sm-book-sl-avail { background: none; border-color: transparent; }
+.sm-book-sl-avail:hover { background: rgba(255, 255, 255, 0.03); }
+
+/* Cap the available-storylines pool so it doesn't push the form off-screen. */
+.sm-book-available {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--SmartThemeUnderlineColor) transparent;
+}
+.sm-book-sl-order {
+    width: 18px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(180, 160, 140, 0.7);
+    flex-shrink: 0;
+}
+.sm-book-sl-title {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sm-book-sl-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+}
+.sm-book-sl-controls {
+    display: flex;
+    gap: 1px;
+    flex-shrink: 0;
+}
+
+
+/* ─── ST Tag Picker (book→character-card tag links) ── */
+
+.sm-field-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+.sm-sttag-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sm-sttag-search {
+    margin-bottom: 2px;
+}
+.sm-sttag-filter {
+    font-size: 12px;
+    padding: 5px 8px;
+    width: 100%;
+}
+.sm-sttag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+.sm-sttag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.08)) 35%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.15)) 50%, transparent);
+    color: var(--sttag-fg, rgba(255, 255, 255, 0.7));
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    user-select: none;
+}
+.sm-sttag-pill:hover {
+    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.12)) 55%, transparent);
+    border-color: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.25)) 70%, transparent);
+}
+.sm-sttag-pill.sm-sttag-selected {
+    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.2)) 60%, transparent);
+    border-color: var(--sttag-bg, rgba(255,255,255,0.4));
+    color: var(--sttag-fg, rgba(255, 255, 255, 0.95));
+    box-shadow: 0 0 6px color-mix(in srgb, var(--sttag-bg, transparent) 30%, transparent);
+}
+.sm-sttag-check {
+    font-size: 9px;
+    opacity: 0.85;
+}
+.sm-sttag-label {
+    white-space: nowrap;
+}
+
+/* ─── DAR playlist picker preview ────────────────── */
+
+.sm-dar-preview {
+    margin-top: 10px;
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sm-dar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.sm-dar-preview-empty {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.12);
+    font-size: 22px;
+}
+
+
+/* ─── Chat Details Editor ────────────────────────── */
+/* Per-chat accordion for gallery images + quotes in the Storyline editor. */
+
+.sm-cd-row {
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.sm-cd-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+}
+.sm-cd-header:hover { background: rgba(255, 255, 255, 0.02); }
+
+.sm-cd-arrow {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.25);
+    transition: transform 0.15s;
+    width: 14px;
+    text-align: center;
+}
+.sm-cd-arrow.sm-cd-arrow-open { transform: rotate(90deg); }
+
+.sm-cd-chat-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sm-cd-badge {
+    font-size: 10px;
+    color: rgba(180, 160, 140, 0.5);
+    flex-shrink: 0;
+}
+
+.sm-cd-body {
+    padding: 6px 10px 14px 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.sm-cd-section {
+    margin-bottom: 14px;
+}
+.sm-cd-section:last-child { margin-bottom: 0; }
+
+.sm-cd-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
+}
+
+.sm-cd-empty {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+/* Image items in the editor */
+.sm-cd-image-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+.sm-cd-image-item:last-child { border-bottom: none; }
+
+.sm-cd-image-mini {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sm-cd-image-name {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sm-cd-image-caption {
+    width: 140px;
+    flex-shrink: 0;
+    font-size: 11px;
+}
+
+/* Quote items in the editor */
+.sm-cd-quote-item {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+.sm-cd-quote-item:last-child { border-bottom: none; }
+
+.sm-cd-quote-text {
+    flex: 1;
+    min-height: 50px;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.sm-cd-quote-speaker {
+    width: 120px;
+    flex-shrink: 0;
+    font-size: 11px;
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.sm-cd-remove {
+    color: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 2px;
+}
+.sm-cd-remove:hover { color: rgba(200, 100, 100, 0.7); }
+
+/* Action buttons row */
+.sm-cd-add-img-btn,
+.sm-cd-add-quote-btn,
+.sm-cd-pull-quotes-btn {
+    font-size: 11px;
+    margin-top: 6px;
+    margin-right: 8px;
+}
