@@ -1,0 +1,12 @@
+{
+  "display_name": "Story Manager",
+  "loading_order": 2,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "asispecimen",
+  "version": "0.1.3",
+  "homePage": "https://github.com/mokimoko/SillyTavern-StoryManager",
+  "auto_update": false
+}
