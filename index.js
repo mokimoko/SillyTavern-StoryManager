@@ -79,6 +79,43 @@ function setupInputButton() {
     sbBtn.innerHTML = '<i class="fa-solid fa-bars-staggered"></i> Story Sidebar';
     sbBtn.addEventListener('click', openSidebar);
     menu.appendChild(sbBtn);
+
+    // When UIBedazzler's side-button strip is present it provides its own
+    // Story Manager trigger (→ openSidebar), so our wand-menu entries are
+    // redundant. UIBedazzler hides them by text-matching "story manager",
+    // which catches the primary entry but NOT "Story Sidebar". Suppress both
+    // ourselves once the strip exists. The strip is built on APP_READY (~300ms
+    // after load), so poll briefly rather than assuming it's already there.
+    suppressWandEntriesIfBedazzled(btn, sbBtn);
+}
+
+/**
+ * Hide our wand-menu entries while UIBedazzler's side-button strip is active.
+ * Feature-detected off the strip container (#bd-side-buttons) so there's no
+ * hard dependency on UIBedazzler. Reverts automatically if the strip is later
+ * torn down (e.g. the user disables side buttons mid-session).
+ */
+function suppressWandEntriesIfBedazzled(...entries) {
+    const STRIP_ID = 'bd-side-buttons';
+
+    const sync = () => {
+        const stripActive = !!document.getElementById(STRIP_ID);
+        for (const el of entries) {
+            if (!el) continue;
+            el.style.display = stripActive ? 'none' : '';
+        }
+    };
+
+    // Initial settle: the strip appears ~300ms post-APP_READY. Poll a handful
+    // of times, then keep watching the body for add/remove of the strip.
+    let ticks = 0;
+    const iv = setInterval(() => {
+        sync();
+        if (++ticks >= 12) clearInterval(iv); // ~3s of coverage
+    }, 250);
+
+    const obs = new MutationObserver(sync);
+    obs.observe(document.body, { childList: true });
 }
 
 // ============================================================
