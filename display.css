@@ -1139,3 +1139,66 @@
 }
 .sm-page-details-close:hover { color: rgba(255, 255, 255, 0.5); }
 .sm-page-details-close i { font-size: 9px; }
+
+
+/* ─── Word counts (populated from cached counts, no live fetch) ───── */
+
+/* Right-hand meta column on each chat row: date on top, word count beneath.
+   When no date is assigned, the word count simply takes the slot. */
+.sm-page-chat-meta {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;   /* always bottom-align, date or not */
+    gap: 2px;
+    padding-bottom: 2px;
+}
+.sm-page-chat-meta .sm-page-chat-chrono {
+    padding-top: 0; /* meta column owns the top spacing now */
+}
+.sm-page-chat-wordcount {
+    font-size: 10px;
+    color: rgba(180, 160, 140, 0.4);
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+}
+.sm-page-chat-wordcount i {
+    font-size: 9px;
+    opacity: 0.7;
+    margin-right: 3px;
+}
+
+/* Storyline total — subtle, sits to the right of the storyline title. */
+.sm-page-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.sm-page-title-words {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(180, 160, 140, 0.5);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+.sm-page-title-words i {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-right: 4px;
+}
+
+/* Book total — sits under the storyline count in the book detail panel. */
+.sm-book-detail-words {
+    font-size: 11px;
+    color: rgba(180, 160, 140, 0.5);
+    margin-top: -12px;   /* pull up toward the storyline count above it */
+    margin-bottom: 16px;
+    letter-spacing: 0.2px;
+}
+.sm-book-detail-words i {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-right: 4px;
+}

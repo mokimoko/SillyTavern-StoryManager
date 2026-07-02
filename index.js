@@ -10,6 +10,7 @@
  * Management UI (Phase 2) and the Display (Phase 4) arrive later.
  */
 import { initFileStore } from './src/fileStore.js';
+import { initWordCountCapture } from './src/wordCountCapture.js';
 import { initSettings, getSetting, isEnabled } from './src/settings.js';
 import {
     getBooks, getBook, createBook, updateBook, deleteBook,
@@ -222,6 +223,7 @@ jQuery(async () => {
     if (initialized) return;
 
     initFileStore();
+    initWordCountCapture();
     initSettings();
 
     loadStylesheets();

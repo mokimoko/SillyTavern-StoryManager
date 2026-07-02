@@ -28,6 +28,7 @@
 import { coverBg, escapeHtml, escapeAttr, prettyChatName } from './util.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { getQuotesForChat } from '../summarizerBridge.js';
+import { normalizeChatKey, sumWordsForChats } from '../storage.js';
 
 // ============================================================
 // Dynamic Audio Redux bridge
@@ -108,12 +109,21 @@ function allTagsHtml(tags = {}) {
 // Render
 // ============================================================
 
-export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireChatHover }) {
+export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireChatHover, wordCounts = {} }) {
     const sl = storyline;
     const heroUrl = sl.heroImage || sl.coverImage || null;
 
     // Chats in curated chronological order.
     const chats = [...(sl.chats || [])].sort((a, b) => (a.chronoOrder || 0) - (b.chronoOrder || 0));
+
+    // Storyline word total (subtle, shown beside the title). Sums cached
+    // per-chat counts — no live fetch.
+    const storylineWords = sumWordsForChats(chats, wordCounts);
+    const storylineWordsHtml = storylineWords > 0
+        ? `<span class="sm-page-title-words" title="Total words in this storyline">
+               <i class="fa-solid fa-book-open"></i> ${storylineWords.toLocaleString()} words
+           </span>`
+        : '';
 
     const desc = sl.description?.trim();
     const descHtml = desc
@@ -135,8 +145,17 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
             const blurbHtml = blurb
                 ? `<div class="sm-page-chat-blurb">${escapeHtml(blurb)}</div>`
                 : `<div class="sm-page-chat-blurb sm-muted">No blurb yet.</div>`;
-            const chrono = c.chronoLabel
+            const chronoLine = c.chronoLabel
                 ? `<div class="sm-page-chat-chrono">${escapeHtml(c.chronoLabel)}</div>`
+                : '';
+            // Per-chat word count (cached). Sits beneath the date, or takes the
+            // date's slot when no chronoLabel is assigned. Hidden if uncached.
+            const wc = wordCounts[normalizeChatKey(c.file_name)] || 0;
+            const wcLine = wc > 0
+                ? `<div class="sm-page-chat-wordcount" title="Words in this chat"><i class="fa-solid fa-book-open"></i> ${wc.toLocaleString()}</div>`
+                : '';
+            const chrono = (chronoLine || wcLine)
+                ? `<div class="sm-page-chat-meta">${chronoLine}${wcLine}</div>`
                 : '';
             const hasStored = (c.images?.length > 0) || (c.quotes?.length > 0);
             return `
@@ -204,7 +223,10 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
                     ${coverBg(coverUrl, 'fa-book-open')}
                 </div>
                 <div class="sm-page-info">
-                    <div class="sm-page-title">${escapeHtml(sl.title)}</div>
+                    <div class="sm-page-title-row">
+                        <div class="sm-page-title">${escapeHtml(sl.title)}</div>
+                        ${storylineWordsHtml}
+                    </div>
                     ${timespanHtml}
                     ${descHtml}
                     ${tagsHtml ? `<div class="sm-page-tags">${tagsHtml}</div>` : ''}

@@ -150,6 +150,10 @@ export function createEmptyStore() {
         lastModified: new Date().toISOString(),
         books: {},
         storylines: {},
+        // file_name (normalized, no .jsonl) → cached word count.
+        // Populated cheaply from the active chat by wordCountCapture.js so the
+        // Display never has to bulk-fetch chat metadata to show word totals.
+        wordCounts: {},
     };
 }
 
@@ -174,6 +178,7 @@ export async function getStore() {
         // Forward-compat: ensure top-level collections always exist.
         if (!cache.books) cache.books = {};
         if (!cache.storylines) cache.storylines = {};
+        if (!cache.wordCounts) cache.wordCounts = {};
     } catch (e) {
         logError('Failed to load store:', e.message);
         cache = createEmptyStore();

@@ -15,7 +15,10 @@
  *
  * Exports: openDisplay(), closeDisplay()
  */
-import { getBooks, getStorylines, getStorylinesInBook } from '../storage.js';
+import {
+    getBooks, getStorylines, getStorylinesInBook,
+    getWordCountMap, sumWordsForChats, sumWordsForBook,
+} from '../storage.js';
 import { openChatForCharacter, getSTTags } from '../stContext.js';
 import { renderBookShelf } from './bookShelf.js';
 import { renderStorylineGrid } from './storylineGrid.js';
@@ -36,6 +39,8 @@ let detailEl = null;           // shared cursor-tracked chat detail panel
 // Cached store snapshot for the current open session.
 let books = [];                // array of book objects
 let booksOrdered = [];         // books in a stable display order
+let storylinesMap = {};        // id → storyline (for book-wide word totals)
+let wordCounts = {};           // file_name → cached word count (no live fetch)
 
 // ============================================================
 // Open / Close
@@ -76,6 +81,11 @@ async function refreshData() {
     booksOrdered = Object.values(booksMap || {})
         .sort((a, b) => (a.created || 0) - (b.created || 0));
     books = booksOrdered;
+
+    // Snapshot the storyline map + cached word counts once per open. Both are
+    // pure in-memory reads from our own store — no ST chat API calls here.
+    storylinesMap = (await getStorylines()) || {};
+    wordCounts = (await getWordCountMap()) || {};
 }
 
 /** Storylines to show for the current active book (or all, ordered). */
@@ -204,6 +214,14 @@ function renderBookDetail() {
 
     const countSl = book.storylineIds?.length || 0;
 
+    // Book-wide word total: sum across every storyline assigned to this book.
+    const bookWords = sumWordsForBook(book, storylinesMap, wordCounts);
+    const bookWordsHtml = bookWords > 0
+        ? `<div class="sm-book-detail-words" title="Total words across this book">
+               <i class="fa-solid fa-book-open"></i> ${bookWords.toLocaleString()} word${bookWords === 1 ? '' : 's'}
+           </div>`
+        : '';
+
     panel.innerHTML = `
         <div class="sm-book-detail-inner">
             <div class="sm-book-detail-cover">
@@ -211,6 +229,7 @@ function renderBookDetail() {
             </div>
             <div class="sm-book-detail-title">${escapeHtml(book.title)}</div>
             <div class="sm-book-detail-count">${countSl} storyline${countSl === 1 ? '' : 's'}</div>
+            ${bookWordsHtml}
             <div class="sm-book-detail-section">
                 <div class="sm-book-detail-label">Tags</div>
                 <div class="sm-book-detail-tags">${tagsHtml}</div>
@@ -293,6 +312,7 @@ async function showPage(storylineId, gridStorylines) {
 
     renderStorylinePage(pageHost, {
         storyline,
+        wordCounts,
         onBack: () => showGrid(),
         onOpenChat: async (chat) => {
             // Cross-character open: chat entries carry their owning avatar.

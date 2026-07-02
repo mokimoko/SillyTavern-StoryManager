@@ -311,3 +311,74 @@ export async function getStorylinesInBook(bookId) {
         .map(id => store.storylines[id])
         .filter(Boolean);
 }
+
+
+// ============================================================
+// Word counts (cached, populated by wordCountCapture.js)
+// ============================================================
+
+/**
+ * Canonical key for the wordCounts map: chat file name without the .jsonl
+ * extension. Every read/write goes through this so a chat stored as
+ * "foo.jsonl" and one stored as "foo" resolve to the same bucket.
+ */
+export function normalizeChatKey(fileName) {
+    return String(fileName || '').replace(/\.jsonl$/i, '');
+}
+
+/**
+ * Record (or update) the cached word count for a single chat.
+ * Called from the cheap active-chat capture path — never bulk work.
+ * No-ops on an empty file name. Persists via the debounced saveStore.
+ */
+export async function recordChatWordCount(fileName, count) {
+    const key = normalizeChatKey(fileName);
+    if (!key) return;
+    const store = await getStore();
+    if (!store.wordCounts) store.wordCounts = {};
+    const n = Number(count) || 0;
+    // Skip a write if nothing actually changed (avoids needless saves).
+    if (store.wordCounts[key] === n) return;
+    store.wordCounts[key] = n;
+    saveStore(store);
+}
+
+/**
+ * Get the whole file_name → count map (safe empty default).
+ * The Display loads this once per open and reads from it synchronously.
+ */
+export async function getWordCountMap() {
+    const store = await getStore();
+    return store.wordCounts || {};
+}
+
+/**
+ * Sum cached word counts for an array of chat entries against a map.
+ * Chats with no recorded count (never opened since install) contribute 0.
+ * @param {Array<{file_name:string}>} chats
+ * @param {Object<string,number>} map
+ */
+export function sumWordsForChats(chats, map) {
+    if (!Array.isArray(chats) || !map) return 0;
+    let total = 0;
+    for (const c of chats) {
+        total += map[normalizeChatKey(c.file_name)] || 0;
+    }
+    return total;
+}
+
+/**
+ * Sum cached word counts across every storyline assigned to a book.
+ * @param {{storylineIds?: string[]}} book
+ * @param {Object<string,object>} storylinesMap - id → storyline
+ * @param {Object<string,number>} wordMap - file_name → count
+ */
+export function sumWordsForBook(book, storylinesMap, wordMap) {
+    if (!book || !storylinesMap || !wordMap) return 0;
+    let total = 0;
+    for (const id of book.storylineIds || []) {
+        const sl = storylinesMap[id];
+        if (sl) total += sumWordsForChats(sl.chats, wordMap);
+    }
+    return total;
+}
