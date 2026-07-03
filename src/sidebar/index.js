@@ -21,7 +21,7 @@ import {
 } from '../storage.js';
 import { openModal } from '../modal/index.js';
 import { openDisplay } from '../display/index.js';
-import { escapeHtml, escapeAttr } from '../display/util.js';
+import { escapeHtml, escapeAttr, logWarn } from '../display/util.js';
 
 /** Respect the entryPoint setting when expanding from sidebar. */
 function openEntryPoint(tab) {
@@ -66,7 +66,7 @@ function registerSTEvents() {
             if (evt) bus.on(evt, onSwitch);
         }
     } catch (e) {
-        console.warn('[StoryManager] Could not register ST events for sidebar:', e);
+        logWarn('Could not register ST events for sidebar:', e);
     }
 }
 

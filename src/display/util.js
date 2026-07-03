@@ -5,7 +5,40 @@
  * prettyChatName.  Every module in the extension imports from HERE instead
  * of defining its own copies.  If you need to change escaping behaviour,
  * change it once in this file.
+ *
+ * Also the canonical home for the extension's debug loggers (mirrors the
+ * pattern used across the other extensions, e.g. ScenarioCrafter's utils.js):
+ *   log()/logWarn() are gated behind DEBUG and stay silent in normal use;
+ *   logError() ALWAYS fires so real failures are never swallowed.
+ * Flip DEBUG to true (or set window.SM_DEBUG = true before load) to surface
+ * the verbose boot/diagnostic chatter when troubleshooting.
  */
+
+// ============================================================
+// Debug logging
+// ============================================================
+
+// Debug flag — set to true (or window.SM_DEBUG = true) to enable verbose logs.
+const DEBUG = false;
+
+function debugOn() {
+    return DEBUG || (typeof window !== 'undefined' && window.SM_DEBUG === true);
+}
+
+/** Gated info log — silent unless debug is on. */
+export function log(...args) {
+    if (debugOn()) console.log('[StoryManager]', ...args);
+}
+
+/** Gated warning — silent unless debug is on (use for noisy retry/fallback chatter). */
+export function logWarn(...args) {
+    if (debugOn()) console.warn('[StoryManager]', ...args);
+}
+
+/** Always-on error log — real failures should never be swallowed. */
+export function logError(...args) {
+    console.error('[StoryManager]', ...args);
+}
 
 /** Escape text for safe insertion into HTML text nodes / innerHTML. */
 export function escapeHtml(s) {

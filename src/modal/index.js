@@ -13,6 +13,7 @@
  * placeholder rather than throwing, so the shell is usable before the tabs land.
  */
 import { openDisplay } from '../display/index.js';
+import { logError } from '../display/util.js';
 
 // Tab renderers. During Phase 2 build-out some of these may still be stubs;
 // each is expected to export `render(container, ctx)`.
@@ -171,7 +172,7 @@ function renderContent() {
             close: closeModal,
         });
     } catch (e) {
-        console.error(`[StoryManager] Failed to render "${tab.id}" tab:`, e);
+        logError(`Failed to render "${tab.id}" tab:`, e);
         content.innerHTML = `
             <div class="sm-empty-state">
                 <i class="fa-solid fa-triangle-exclamation"></i>

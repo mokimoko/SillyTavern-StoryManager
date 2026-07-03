@@ -19,7 +19,7 @@ import { renderSTTagPicker } from '../components/stTagPicker.js';
 import {
     generateBookDescription, canGenerateBook,
 } from '../descriptionGen.js';
-import { escapeHtml, escapeAttr } from '../display/util.js';
+import { escapeHtml, escapeAttr, logError } from '../display/util.js';
 
 let editingId = null;
 let draft = null;
@@ -433,7 +433,7 @@ async function wireDescGen(container) {
                 setStatus(result.reason || 'Generation unavailable.', 'err');
             }
         } catch (e) {
-            console.error('[StoryManager] book desc gen failed:', e);
+            logError('book desc gen failed:', e);
             setStatus('Generation failed — see console.', 'err');
         } finally {
             btn.disabled = false;

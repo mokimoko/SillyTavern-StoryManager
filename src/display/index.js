@@ -23,7 +23,7 @@ import { openChatForCharacter, getSTTags } from '../stContext.js';
 import { renderBookShelf } from './bookShelf.js';
 import { renderStorylineGrid } from './storylineGrid.js';
 import { renderStorylinePage } from './storylinePage.js';
-import { coverBg, escapeHtml, escapeAttr, prettyChatName } from './util.js';
+import { coverBg, escapeHtml, escapeAttr, prettyChatName, logError } from './util.js';
 
 const BACKDROP_ID = 'sm-display-backdrop';
 const DISPLAY_ID = 'sm-display-frame';
@@ -148,7 +148,7 @@ async function openManagement() {
         const modal = await import('../modal/index.js');
         modal.openModal('storylines');
     } catch (e) {
-        console.error('[StoryManager] Failed to open management modal:', e);
+        logError('Failed to open management modal:', e);
     }
 }
 
@@ -320,7 +320,7 @@ async function showPage(storylineId, gridStorylines) {
                 await openChatForCharacter(chat.avatar || storyline.character?.avatar, chat.file_name);
                 closeDisplay();
             } catch (e) {
-                console.error('[StoryManager] Failed to open chat:', e);
+                logError('Failed to open chat:', e);
             }
         },
         wireChatHover: wireChatHover,

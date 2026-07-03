@@ -11,6 +11,7 @@
  * Quote shape: { speaker, text, context, pinned }
  */
 import { getRequestHeaders } from '../../../../../script.js';
+import { logWarn } from './display/util.js';
 
 const ARCHIVE_URL = '/user/files/archive_summarizer.json';
 
@@ -37,7 +38,7 @@ async function loadArchive() {
         _cacheTime = Date.now();
         return _cache;
     } catch (e) {
-        console.warn('[StoryManager] SimpleSummarizer archive not available:', e.message);
+        logWarn('SimpleSummarizer archive not available:', e.message);
         _cache = null;
         return null;
     }

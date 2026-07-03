@@ -31,7 +31,7 @@ import {
     generateStorylineDescription, canGenerateStoryline,
     generateChatBlurb,
 } from '../descriptionGen.js';
-import { escapeHtml, escapeAttr } from '../display/util.js';
+import { escapeHtml, escapeAttr, logError } from '../display/util.js';
 
 // View state is module-local: which storyline is open for editing (null = list).
 let editingId = null;
@@ -562,7 +562,7 @@ function renderChronoSection(container) {
                         setStatus(result.reason || 'Generation unavailable.', 'err');
                     }
                 } catch (e) {
-                    console.error('[StoryManager] chat blurb gen failed:', e);
+                    logError('chat blurb gen failed:', e);
                     setStatus('Generation failed — see console.', 'err');
                 } finally {
                     btn.disabled = false;
@@ -673,7 +673,7 @@ function renderChatDetailBody(body, chat, container) {
                 const result = await uploadChatImage(file);
                 chat.images.push(result);
             } catch (e) {
-                console.error('[StoryManager] chat image upload failed:', e);
+                logError('chat image upload failed:', e);
             }
         }
         renderImagesList(body.querySelector('.sm-cd-images-list'), chat, container);
@@ -718,7 +718,7 @@ function renderChatDetailBody(body, chat, container) {
             }
             alert(`Pulled ${added} new quote${added === 1 ? '' : 's'}. ${pulled.length - added} duplicate${pulled.length - added === 1 ? '' : 's'} skipped.`);
         } catch (e) {
-            console.error('[StoryManager] quote pull failed:', e);
+            logError('quote pull failed:', e);
             alert('Failed to pull quotes — see console.');
         } finally {
             pullBtn.disabled = false;
@@ -1013,7 +1013,7 @@ async function wireDescGen(container) {
                 setStatus(result.reason || 'Generation unavailable.', 'err');
             }
         } catch (e) {
-            console.error('[StoryManager] storyline desc gen failed:', e);
+            logError('storyline desc gen failed:', e);
             setStatus('Generation failed — see console.', 'err');
         } finally {
             btn.disabled = false;

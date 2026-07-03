@@ -20,6 +20,7 @@
 import { eventSource, event_types, getCurrentChatId } from '../../../../../script.js';
 import { getContext } from '../../../../extensions.js';
 import { recordChatWordCount } from './storage.js';
+import { logWarn } from './display/util.js';
 
 const DEBOUNCE_MS = 600;
 let captureTimer = null;
@@ -53,7 +54,7 @@ function scheduleCapture() {
             const count = computeActiveChatWordCount();
             await recordChatWordCount(chatId, count);
         } catch (e) {
-            console.warn('[StoryManager] word count capture failed:', e?.message);
+            logWarn('word count capture failed:', e?.message);
         }
     }, DEBOUNCE_MS);
 }

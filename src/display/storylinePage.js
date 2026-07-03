@@ -25,7 +25,7 @@
  *   - onOpenChat(chatEntry): open a chat in ST
  *   - wireChatHover(rowEl, chatEntry): attach the shared detail-panel listeners
  */
-import { coverBg, escapeHtml, escapeAttr, prettyChatName } from './util.js';
+import { coverBg, escapeHtml, escapeAttr, prettyChatName, logWarn } from './util.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { getQuotesForChat } from '../summarizerBridge.js';
 import { normalizeChatKey, sumWordsForChats } from '../storage.js';
@@ -78,7 +78,7 @@ async function playDarPlaylist(name) {
             await executeSlashCommands('/d-audio on');
         }
     } catch (e) {
-        console.warn('[StoryManager] DAR playback trigger failed:', e);
+        logWarn('DAR playback trigger failed:', e);
         // Fallback: enable and hope the worker picks it up
         audio.enabled = true;
     }
@@ -325,7 +325,7 @@ async function mergeQuotes(chat) {
     try {
         summarizerQuotes = await getQuotesForChat(chat.file_name);
     } catch (e) {
-        console.warn('[StoryManager] Failed to fetch summarizer quotes:', e);
+        logWarn('Failed to fetch summarizer quotes:', e);
     }
 
     // Deduplicate: if a manual quote has the same text as a summarizer one, keep manual.

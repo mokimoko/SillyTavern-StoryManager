@@ -18,6 +18,7 @@
 import { getRequestHeaders } from '../../../../../script.js';
 import { getContext } from '../../../../extensions.js';
 import { tags as stTagList, tag_map as stTagMap } from '../../../../tags.js';
+import { logWarn, logError } from './display/util.js';
 
 // ============================================================
 // Current character / chat metadata
@@ -113,7 +114,7 @@ export async function getChatsForCharacter(avatarUrl, opts = {}) {
         if (!Array.isArray(data)) return [];
         return data;
     } catch (e) {
-        console.error('[StoryManager] getChatsForCharacter failed:', e);
+        logError('getChatsForCharacter failed:', e);
         return [];
     }
 }
@@ -148,7 +149,7 @@ export async function getChatMessages(avatarUrl, fileName) {
         if (!Array.isArray(data)) return []; // {} on missing/empty chat
         return data.filter(m => m && typeof m.mes === 'string');
     } catch (e) {
-        console.error('[StoryManager] getChatMessages failed:', e);
+        logError('getChatMessages failed:', e);
         return [];
     }
 }
@@ -240,7 +241,7 @@ export async function getSummaryForChat(fileName) {
     try {
         return await window.Summarizer.getSummary(fileName);
     } catch (e) {
-        console.error('[StoryManager] getSummaryForChat failed:', e);
+        logError('getSummaryForChat failed:', e);
         return null;
     }
 }
@@ -312,11 +313,11 @@ export async function generateText(prompt, opts = {}) {
                             || res?.text || res?.output || '';
                         if (text) return String(text).trim();
                     } catch (err) {
-                        console.warn(`[StoryManager] CMRS attempt ${attempt + 1} failed:`, err?.message);
+                        logWarn(`CMRS attempt ${attempt + 1} failed:`, err?.message);
                         if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
                     }
                 }
-                console.warn('[StoryManager] CMRS exhausted, falling back to quiet prompt');
+                logWarn('CMRS exhausted, falling back to quiet prompt');
             }
         }
     }
@@ -332,7 +333,7 @@ export async function generateText(prompt, opts = {}) {
             });
             if (res) return String(res).trim();
         } catch (e) {
-            console.error('[StoryManager] generateQuietPrompt failed:', e);
+            logError('generateQuietPrompt failed:', e);
         }
     }
 

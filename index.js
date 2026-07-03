@@ -25,6 +25,7 @@ import {
 import { openModal, closeModal } from './src/modal/index.js';
 import { openDisplay, closeDisplay } from './src/display/index.js';
 import { openSidebar, closeSidebar } from './src/sidebar/index.js';
+import { log, logWarn } from './src/display/util.js';
 
 const EXTENSION_DIR = 'SillyTavern-StoryManager';
 let initialized = false;
@@ -146,7 +147,7 @@ async function registerSlashCommands() {
             helpString: 'Open the Story Manager in-chat sidebar',
         }));
     } catch (e) {
-        console.warn('[StoryManager] Slash command registration skipped:', e.message);
+        logWarn('Slash command registration skipped:', e.message);
     }
 }
 
@@ -232,5 +233,5 @@ jQuery(async () => {
     exposePublicAPI();
 
     initialized = true;
-    console.log('[StoryManager] Phase 1 foundation loaded.');
+    log('Phase 1 foundation loaded.');
 });

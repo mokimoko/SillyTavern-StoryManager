@@ -18,7 +18,7 @@
  *   - onChange({ url, thumb }) fires on upload, path-paste commit, or clear.
  */
 import { getRequestHeaders } from '../../../../../../script.js';
-import { escapeAttr } from '../display/util.js';
+import { escapeAttr, logWarn, logError } from '../display/util.js';
 
 const UPLOAD_FOLDER = 'storymanager';
 const THUMB_MAX = 640;       // longest edge (px) for generated thumbnails
@@ -165,7 +165,7 @@ export async function uploadImage(file) {
         const blob = await makeThumbnailBlob(file);
         if (blob) thumb = await postImage(await blobToBase64(blob), 'jpeg', `${base}_thumb`);
     } catch (e) {
-        console.warn('[StoryManager] thumbnail generation failed; using full image:', e);
+        logWarn('thumbnail generation failed; using full image:', e);
     }
 
     return { url, thumb };
@@ -241,7 +241,7 @@ function wire(container, onChange) {
         try {
             commit(await uploadImage(file));
         } catch (e) {
-            console.error('[StoryManager] image upload failed:', e);
+            logError('image upload failed:', e);
             setStatus(e.message || 'Upload failed', true);
         }
     });
