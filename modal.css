@@ -1,3 +1,7 @@
+/* THEME-ADAPTIVE (2026-07): colors now resolve via the --sm-* token layer
+ * defined in style.css (color-mix on --SmartTheme* tokens). Works on BOTH
+ * light and dark themes. Literals remaining are intentional var() fallbacks. */
+
 /* ============================================================
    StoryManager — Modal Styles (Phase 2)
    Nebula Dark aesthetic: dark transparency, muted taupe accent.
@@ -10,7 +14,7 @@
 .sm-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: var(--sm-scrim);
     z-index: 9998;
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -30,8 +34,8 @@
     transform: translate(-50%, -50%) scale(0.95);
     width: min(900px, 93vw);
     height: min(720px, 90vh);
-    background: rgba(18, 18, 22, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -53,19 +57,19 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--sm-border-soft);
     flex-shrink: 0;
 }
 .sm-title {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     letter-spacing: 0.3px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.sm-title i { color: rgba(180, 160, 140, 0.7); }
+.sm-title i { color: var(--sm-accent-text); }
 
 .sm-header-actions {
     display: flex;
@@ -82,26 +86,26 @@
     font-size: 12px;
     font-family: inherit;
     cursor: pointer;
-    background: rgba(180, 160, 140, 0.14);
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(180, 160, 140, 0.22);
+    background: var(--sm-accent-wash);
+    color: var(--sm-text-2);
+    border: 1px solid var(--sm-accent-border);
     transition: background 0.15s, color 0.15s;
     white-space: nowrap;
 }
 .sm-display-toggle:hover {
-    background: rgba(180, 160, 140, 0.26);
-    color: rgba(255, 255, 255, 0.92);
+    background: var(--sm-accent-hover);
+    color: var(--sm-text-strong);
 }
 .sm-display-toggle i { font-size: 11px; }
 
 .sm-close {
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     font-size: 16px;
     padding: 4px 6px;
     transition: color 0.15s;
 }
-.sm-close:hover { color: rgba(255, 255, 255, 0.8); }
+.sm-close:hover { color: var(--sm-text); }
 
 /* ─── Body / Sidebar / Content ────────────────────── */
 
@@ -114,7 +118,7 @@
 .sm-sidebar {
     width: 56px;
     flex-shrink: 0;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid var(--sm-border-soft);
     padding: 10px 0;
     display: flex;
     flex-direction: column;
@@ -129,18 +133,18 @@
     width: 42px;
     height: 42px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--sm-text-dim);
     transition: color 0.15s, background 0.15s;
     border-left: 2px solid transparent;
 }
 .sm-nav-item:hover {
-    color: rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.03);
+    color: var(--sm-text-2);
+    background: var(--sm-fill-2);
 }
 .sm-nav-item.sm-nav-active {
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.06);
-    border-left-color: rgba(180, 160, 140, 0.6);
+    color: var(--sm-text-strong);
+    background: var(--sm-fill-hover);
+    border-left-color: var(--sm-accent-line);
 }
 .sm-nav-item i { font-size: 18px; }
 
@@ -161,11 +165,11 @@
 .sm-tab-title {
     font-size: 15px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
 }
 .sm-tab-subtitle {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     margin-left: 10px;
 }
 .sm-tab-actions {
@@ -188,42 +192,42 @@
     white-space: nowrap;
 }
 .sm-btn-accent {
-    background: rgba(180, 160, 140, 0.2);
-    color: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(180, 160, 140, 0.25);
+    background: var(--sm-accent-bg);
+    color: var(--sm-text-2);
+    border: 1px solid var(--sm-accent-border);
 }
 .sm-btn-accent:hover {
-    background: rgba(180, 160, 140, 0.3);
-    color: rgba(255, 255, 255, 0.9);
+    background: var(--sm-accent-border);
+    color: var(--sm-text-strong);
 }
 .sm-btn-ghost {
     background: none;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--sm-text-dim);
 }
 .sm-btn-ghost:hover {
-    color: rgba(255, 255, 255, 0.75);
-    background: rgba(255, 255, 255, 0.04);
+    color: var(--sm-text-2);
+    background: var(--sm-fill);
 }
-.sm-btn-danger-text { color: rgba(220, 80, 80, 0.6); }
-.sm-btn-danger-text:hover { color: rgba(220, 80, 80, 0.9); }
+.sm-btn-danger-text { color: var(--sm-danger); }
+.sm-btn-danger-text:hover { color: var(--sm-danger-hover); }
 
 .sm-btn-icon {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     cursor: pointer;
     padding: 3px 5px;
     font-size: 12px;
     transition: color 0.15s;
 }
-.sm-btn-icon:hover { color: rgba(255, 255, 255, 0.7); }
+.sm-btn-icon:hover { color: var(--sm-text-2); }
 .sm-btn-icon:disabled { opacity: 0.3; cursor: default; }
 
 /* ─── Empty States ────────────────────────────────── */
 
 .sm-empty {
     text-align: center;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     font-size: 13px;
     padding: 24px 0;
 }
@@ -234,7 +238,7 @@
     justify-content: center;
     height: 100%;
     gap: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     text-align: center;
 }
 .sm-empty-state i { font-size: 28px; opacity: 0.4; }
@@ -244,7 +248,7 @@
 /* Inline hint under a section label (e.g. Hero Image explainer). */
 .sm-field-hint {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     margin: -4px 0 8px;
     line-height: 1.45;
 }
@@ -254,7 +258,7 @@
 .sm-section-label {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--sm-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 10px;
@@ -264,12 +268,12 @@
 }
 .sm-section-label i {
     font-size: 12px;
-    color: rgba(180, 160, 140, 0.5);
+    color: var(--sm-accent-dim);
 }
 .sm-field-label {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--sm-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.3px;
     margin-bottom: 5px;
@@ -285,11 +289,11 @@
     font-weight: 400;
     text-transform: none;
     letter-spacing: 0;
-    color: rgba(180, 160, 140, 0.4);
+    color: var(--sm-accent-faint);
     cursor: pointer;
     transition: color 0.15s;
 }
-.sm-gen-btn:hover { color: rgba(180, 160, 140, 0.8); }
+.sm-gen-btn:hover { color: var(--sm-accent-text); }
 .sm-gen-btn:disabled { opacity: 0.3; cursor: default; }
 .sm-gen-btn i { margin-right: 2px; font-size: 9px; }
 
@@ -298,14 +302,14 @@
     font-size: 11px;
     margin-top: 4px;
     min-height: 14px;
-    color: rgba(180, 160, 140, 0.4);
+    color: var(--sm-accent-faint);
 }
-.sm-gen-status.sm-gen-busy { color: rgba(180, 160, 140, 0.6); }
-.sm-gen-status.sm-gen-ok   { color: rgba(120, 180, 120, 0.6); }
-.sm-gen-status.sm-gen-err  { color: rgba(220, 100, 100, 0.6); }
+.sm-gen-status.sm-gen-busy { color: var(--sm-accent-line); }
+.sm-gen-status.sm-gen-ok   { color: var(--sm-ok); }
+.sm-gen-status.sm-gen-err  { color: var(--sm-err); }
 .sm-divider-section {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--sm-border-soft);
     margin: 14px 0;
 }
 
@@ -316,9 +320,9 @@
 .sm-textarea {
     width: 100%;
     padding: 7px 9px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--sm-fill);
+    border: 1px solid var(--sm-border);
+    color: var(--sm-text);
     font-size: 13px;
     font-family: inherit;
     box-sizing: border-box;
@@ -327,7 +331,7 @@
 .sm-select:focus,
 .sm-textarea:focus {
     outline: none;
-    border-color: rgba(180, 160, 140, 0.4);
+    border-color: var(--sm-accent-faint);
 }
 .sm-textarea {
     resize: vertical;
@@ -336,12 +340,12 @@
 }
 .sm-select { cursor: pointer; }
 .sm-select option {
-    background: rgb(25, 25, 30);
-    color: rgba(255, 255, 255, 0.85);
+    background: var(--sm-bg-modal);
+    color: var(--sm-text);
 }
 .sm-input::placeholder,
 .sm-textarea::placeholder {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
 }
 
 .sm-field { margin-bottom: 12px; }
@@ -354,7 +358,7 @@
     width: 1.25em;
     height: 1.25em;
     border-radius: 4px;
-    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    background-color: var(--SmartThemeBlurTintColor, var(--sm-inset));
     border: 2px solid var(--SmartThemeBorderColor);
     display: grid;
     place-content: center;
@@ -376,16 +380,16 @@
     justify-content: space-between;
     gap: 12px;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--sm-border-faint);
 }
 .sm-setting-title {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--sm-text);
     font-weight: 500;
 }
 .sm-setting-desc {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     margin-top: 1px;
 }
 
@@ -447,7 +451,7 @@
     padding: 0 2px;
 }
 .sm-list-search i {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     font-size: 12px;
     flex-shrink: 0;
 }
@@ -467,39 +471,39 @@
     align-items: center;
     gap: 12px;
     padding: 8px 10px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--sm-fill-2);
+    border: 1px solid var(--sm-border-soft);
     transition: background 0.15s, border-color 0.15s;
 }
 .sm-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(180, 160, 140, 0.2);
+    background: var(--sm-fill-hover);
+    border-color: var(--sm-accent-bg);
 }
 .sm-card-thumb {
     width: 44px;
     height: 44px;
     object-fit: cover;
     flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--sm-scrim-thumb);
 }
 .sm-card-thumb-empty {
     display: grid;
     place-content: center;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     font-size: 16px;
 }
 .sm-card-body { flex: 1; min-width: 0; }
 .sm-card-title {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sm-card-meta {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--sm-text-dim);
     margin-top: 2px;
 }
 .sm-card-actions {
@@ -522,7 +526,7 @@
 .sm-tag-section-label {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--sm-text-dim);
     margin-bottom: 5px;
     display: flex;
     align-items: center;
@@ -537,7 +541,7 @@
 }
 .sm-tag-empty {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     font-style: italic;
 }
 .sm-tag-pill {
@@ -546,7 +550,7 @@
     gap: 6px;
     padding: 3px 8px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     border: 1px solid transparent;
     white-space: nowrap;
 }
@@ -559,10 +563,10 @@
 .sm-tag-remove:hover { opacity: 1; }
 
 /* Per-type accent colors (each tag type visually distinct) */
-.sm-tag-character { background: rgba(120, 150, 200, 0.18); border-color: rgba(120, 150, 200, 0.35); }
-.sm-tag-persona   { background: rgba(180, 140, 200, 0.18); border-color: rgba(180, 140, 200, 0.35); }
-.sm-tag-npc       { background: rgba(200, 170, 110, 0.18); border-color: rgba(200, 170, 110, 0.35); }
-.sm-tag-freeform  { background: rgba(140, 180, 150, 0.18); border-color: rgba(140, 180, 150, 0.35); }
+.sm-tag-character { background: var(--sm-tag-char-bg); border-color: var(--sm-tag-char-bd); }
+.sm-tag-persona   { background: var(--sm-tag-persona-bg); border-color: var(--sm-tag-persona-bd); }
+.sm-tag-npc       { background: var(--sm-tag-npc-bg); border-color: var(--sm-tag-npc-bd); }
+.sm-tag-freeform  { background: var(--sm-tag-free-bg); border-color: var(--sm-tag-free-bd); }
 
 .sm-tag-add { display: flex; }
 .sm-tag-input { font-size: 12px; padding: 5px 8px; }
@@ -581,19 +585,19 @@
     padding: 4px 9px;
     font-size: 12px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.55);
+    background: var(--sm-fill);
+    border: 1px solid var(--sm-border);
+    color: var(--sm-text-3);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .sm-persona-chip:hover {
-    background: rgba(255, 255, 255, 0.07);
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--sm-fill-hover);
+    color: var(--sm-text);
 }
 .sm-persona-chip.sm-persona-selected {
-    background: rgba(180, 140, 200, 0.18);
-    border-color: rgba(180, 140, 200, 0.4);
-    color: rgba(255, 255, 255, 0.9);
+    background: var(--sm-tag-persona-bg);
+    border-color: var(--sm-tag-persona-bd);
+    color: var(--sm-text-strong);
 }
 .sm-persona-chip i { font-size: 10px; opacity: 0.7; }
 
@@ -609,8 +613,8 @@
     width: 120px;
     height: 120px;
     flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--sm-scrim-thumb);
+    border: 1px solid var(--sm-border);
     overflow: hidden;
 }
 .sm-image-preview img { width: 100%; height: 100%; object-fit: cover; }
@@ -620,7 +624,7 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     font-size: 22px;
 }
 .sm-image-empty span { font-size: 11px; }
@@ -628,8 +632,8 @@
     position: absolute;
     top: 4px;
     right: 4px;
-    background: rgba(0, 0, 0, 0.6);
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--sm-scrim);
+    color: var(--sm-text);
 }
 .sm-image-controls {
     flex: 1;
@@ -641,8 +645,8 @@
 .sm-image-upload-btn { align-self: flex-start; cursor: pointer; }
 .sm-image-path { display: flex; gap: 6px; }
 .sm-image-path-input { flex: 1; font-size: 12px; }
-.sm-image-status { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
-.sm-image-status-error { color: rgba(220, 110, 110, 0.9); }
+.sm-image-status { font-size: 11px; color: var(--sm-text-dim); }
+.sm-image-status-error { color: var(--sm-danger-text); }
 
 /* ─── Chronology ──────────────────────────────────── */
 
@@ -656,15 +660,15 @@
     align-items: center;
     gap: 9px;
     padding: 7px 9px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--sm-fill-2);
+    border: 1px solid var(--sm-border-soft);
     transition: background 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .sm-chrono-row.sm-chrono-dragging { opacity: 0.4; }
-.sm-chrono-row.sm-chrono-over { border-color: rgba(180, 160, 140, 0.5); }
+.sm-chrono-row.sm-chrono-over { border-color: var(--sm-accent-dim); }
 .sm-chrono-handle {
     cursor: grab;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     font-size: 12px;
 }
 .sm-chrono-handle:active { cursor: grabbing; }
@@ -673,13 +677,13 @@
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(180, 160, 140, 0.7);
+    color: var(--sm-accent-text);
     flex-shrink: 0;
 }
 .sm-chrono-main { flex: 1; min-width: 0; }
 .sm-chrono-file {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--sm-text-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -702,16 +706,16 @@
     padding: 0;
     overflow: hidden;
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.3);
+    background: var(--sm-scrim-thumb);
+    border: 1px solid var(--sm-border);
+    color: var(--sm-text-faint);
     display: grid;
     place-content: center;
     transition: border-color 0.15s, color 0.15s;
 }
 .sm-chrono-img:hover {
-    border-color: rgba(180, 160, 140, 0.4);
-    color: rgba(180, 160, 140, 0.7);
+    border-color: var(--sm-accent-faint);
+    color: var(--sm-accent-text);
 }
 .sm-chrono-img img {
     width: 100%;
@@ -724,8 +728,8 @@
 /* Collapsible per-chat image picker, indented to sit under the row body. */
 .sm-chrono-picker {
     padding: 8px 9px 9px 56px;
-    background: rgba(255, 255, 255, 0.015);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: var(--sm-fill-ghost);
+    border: 1px solid var(--sm-border-faint);
     border-top: none;
 }
 
@@ -741,11 +745,11 @@
     font-size: 11px;
     padding: 3px 7px;
     font-style: italic;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--sm-text-3);
 }
 .sm-chrono-blurb::placeholder {
     font-style: italic;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
 }
 .sm-chrono-blurb-gen {
     flex-shrink: 0;
@@ -773,19 +777,19 @@
     cursor: pointer;
     transition: background 0.15s;
 }
-.sm-chat-assign-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sm-chat-assign-row:hover { background: var(--sm-fill-2); }
 .sm-chat-assign-name {
     flex: 1;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--sm-text-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.sm-chat-owned .sm-chat-assign-name { color: rgba(255, 255, 255, 0.5); }
+.sm-chat-owned .sm-chat-assign-name { color: var(--sm-text-dim); }
 .sm-chat-owner-badge {
     font-size: 10px;
-    color: rgba(200, 170, 110, 0.8);
+    color: var(--sm-tag-npc-fg);
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -805,7 +809,7 @@
     align-items: center;
     gap: 9px;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--sm-text);
     cursor: pointer;
 }
 .sm-radio input[type='radio'] {
@@ -815,7 +819,7 @@
     height: 1.1em;
     border-radius: 50%;
     border: 2px solid var(--SmartThemeBorderColor, rgba(255,255,255,0.3));
-    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    background-color: var(--SmartThemeBlurTintColor, var(--sm-inset));
     display: grid;
     place-content: center;
     cursor: pointer;
@@ -828,7 +832,7 @@
     border-radius: 50%;
     transform: scale(0);
     transition: transform 0.12s;
-    background-color: var(--SmartThemeQuoteColor, rgba(180,160,140,0.9));
+    background-color: var(--SmartThemeQuoteColor, var(--sm-accent-strong));
 }
 .sm-radio input[type='radio']:checked::before { transform: scale(1); }
 
@@ -840,12 +844,12 @@
     align-items: center;
     gap: 9px;
     padding: 6px 8px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--sm-fill-2);
+    border: 1px solid var(--sm-border-soft);
     margin-bottom: 3px;
 }
 .sm-book-sl-avail { background: none; border-color: transparent; }
-.sm-book-sl-avail:hover { background: rgba(255, 255, 255, 0.03); }
+.sm-book-sl-avail:hover { background: var(--sm-fill-2); }
 
 /* Cap the available-storylines pool so it doesn't push the form off-screen. */
 .sm-book-available {
@@ -859,20 +863,20 @@
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(180, 160, 140, 0.7);
+    color: var(--sm-accent-text);
     flex-shrink: 0;
 }
 .sm-book-sl-title {
     flex: 1;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--sm-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sm-book-sl-meta {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--sm-text-dim);
     flex-shrink: 0;
 }
 .sm-book-sl-controls {
@@ -886,7 +890,7 @@
 
 .sm-field-hint {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     margin-bottom: 8px;
     font-style: italic;
 }
@@ -912,6 +916,11 @@
     overflow-y: auto;
     padding: 2px 0;
 }
+/* ST tag pills: mirror core SillyTavern's .tag — the tag's own color as a
+ * solid-ish background, text ALWAYS in --SmartThemeBodyColor so it stays
+ * readable on any theme. (--sttag-fg / tag.color2 is frequently unset or pale,
+ * so leaning on it produced washed-out light-on-light. Body color is the
+ * reliable choice, exactly as core ST does.) */
 .sm-sttag-pill {
     display: inline-flex;
     align-items: center;
@@ -919,21 +928,24 @@
     padding: 4px 10px;
     font-size: 12px;
     cursor: pointer;
-    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.08)) 35%, transparent);
-    border: 1px solid color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.15)) 50%, transparent);
-    color: var(--sttag-fg, rgba(255, 255, 255, 0.7));
+    background: color-mix(in srgb, var(--sttag-bg, var(--sm-fill)) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sttag-bg, var(--sm-border)) 75%, transparent);
+    color: var(--sm-text);
+    text-shadow: none;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
     user-select: none;
 }
 .sm-sttag-pill:hover {
-    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.12)) 55%, transparent);
-    border-color: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.25)) 70%, transparent);
+    background: color-mix(in srgb, var(--sttag-bg, var(--sm-fill-hover)) 78%, transparent);
+    border-color: color-mix(in srgb, var(--sttag-bg, var(--sm-border)) 90%, transparent);
+    color: var(--sm-text-strong);
 }
 .sm-sttag-pill.sm-sttag-selected {
-    background: color-mix(in srgb, var(--sttag-bg, rgba(255,255,255,0.2)) 60%, transparent);
-    border-color: var(--sttag-bg, rgba(255,255,255,0.4));
-    color: var(--sttag-fg, rgba(255, 255, 255, 0.95));
-    box-shadow: 0 0 6px color-mix(in srgb, var(--sttag-bg, transparent) 30%, transparent);
+    background: var(--sttag-bg, var(--sm-accent-bg));
+    border-color: var(--sttag-bg, var(--sm-accent-border));
+    color: var(--sm-text-strong);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--sttag-bg, var(--sm-accent-base)) 55%, transparent),
+                0 0 8px color-mix(in srgb, var(--sttag-bg, transparent) 35%, transparent);
 }
 .sm-sttag-check {
     font-size: 9px;
@@ -950,7 +962,7 @@
     width: 80px;
     height: 80px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--sm-border);
 }
 .sm-dar-preview img {
     width: 100%;
@@ -961,11 +973,11 @@
 .sm-dar-preview-empty {
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--sm-fill-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.12);
+    color: var(--sm-text-whisper);
     font-size: 22px;
 }
 
@@ -974,9 +986,9 @@
 /* Per-chat accordion for gallery images + quotes in the Storyline editor. */
 
 .sm-cd-row {
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--sm-border-faint);
     margin-bottom: 6px;
-    background: rgba(255, 255, 255, 0.01);
+    background: var(--sm-fill-ghost);
 }
 
 .sm-cd-header {
@@ -988,11 +1000,11 @@
     transition: background 0.1s;
     user-select: none;
 }
-.sm-cd-header:hover { background: rgba(255, 255, 255, 0.02); }
+.sm-cd-header:hover { background: var(--sm-fill-faint); }
 
 .sm-cd-arrow {
     font-size: 9px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     transition: transform 0.15s;
     width: 14px;
     text-align: center;
@@ -1001,7 +1013,7 @@
 
 .sm-cd-chat-name {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--sm-text-3);
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
@@ -1010,13 +1022,13 @@
 
 .sm-cd-badge {
     font-size: 10px;
-    color: rgba(180, 160, 140, 0.5);
+    color: var(--sm-accent-dim);
     flex-shrink: 0;
 }
 
 .sm-cd-body {
     padding: 6px 10px 14px 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    border-top: 1px solid var(--sm-border-ghost);
 }
 
 .sm-cd-section {
@@ -1029,13 +1041,13 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     margin-bottom: 8px;
 }
 
 .sm-cd-empty {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     font-style: italic;
     padding: 4px 0;
 }
@@ -1046,7 +1058,7 @@
     align-items: center;
     gap: 8px;
     padding: 5px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--sm-border-ghost);
 }
 .sm-cd-image-item:last-child { border-bottom: none; }
 
@@ -1055,12 +1067,12 @@
     height: 36px;
     object-fit: cover;
     flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--sm-border-soft);
 }
 
 .sm-cd-image-name {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--sm-text-dim);
     flex: 1;
     min-width: 0;
     white-space: nowrap;
@@ -1080,7 +1092,7 @@
     gap: 8px;
     align-items: flex-start;
     padding: 6px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--sm-border-ghost);
 }
 .sm-cd-quote-item:last-child { border-bottom: none; }
 
@@ -1100,12 +1112,12 @@
 }
 
 .sm-cd-remove {
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     flex-shrink: 0;
     align-self: flex-start;
     margin-top: 2px;
 }
-.sm-cd-remove:hover { color: rgba(200, 100, 100, 0.7); }
+.sm-cd-remove:hover { color: var(--sm-danger-soft); }
 
 /* Action buttons row */
 .sm-cd-add-img-btn,

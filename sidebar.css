@@ -1,3 +1,7 @@
+/* THEME-ADAPTIVE (2026-07): colors now resolve via the --sm-* token layer
+ * defined in style.css (color-mix on --SmartTheme* tokens). Works on BOTH
+ * light and dark themes. Literals remaining are intentional var() fallbacks. */
+
 /* sidebar.css — In-chat left sidebar (Phase 2)
  * Mirrors the WL sidebar (which sits on the right); StoryManager's slides
  * in from the LEFT and is a touch wider. Pin support, chat list, quick-assign.
@@ -16,8 +20,8 @@
     height: 100vh;
     width: 320px;
     max-width: 88vw;
-    background: rgba(18, 18, 22, 0.97);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--sm-bg-modal);
+    border-right: 1px solid var(--sm-border);
     z-index: 9997;
     display: flex;
     flex-direction: column;
@@ -37,18 +41,18 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--sm-border-soft);
     flex-shrink: 0;
 }
 .sm-sb-title {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     display: flex;
     align-items: center;
     gap: 7px;
 }
-.sm-sb-title i { color: rgba(180, 160, 140, 0.7); }
+.sm-sb-title i { color: var(--sm-accent-text); }
 .sm-sb-header-actions { display: flex; align-items: center; gap: 2px; }
 
 .sm-sb-pin,
@@ -56,7 +60,7 @@
 .sm-sb-close {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     cursor: pointer;
     padding: 5px 7px;
     font-size: 13px;
@@ -64,8 +68,8 @@
 }
 .sm-sb-pin:hover,
 .sm-sb-modal-btn:hover,
-.sm-sb-close:hover { color: rgba(255, 255, 255, 0.8); }
-.sm-sb-pin.sm-sb-pinned { color: rgba(180, 160, 140, 0.95); }
+.sm-sb-close:hover { color: var(--sm-text); }
+.sm-sb-pin.sm-sb-pinned { color: var(--sm-accent-strong); }
 
 /* ─── Body ────────────────────────────────────────── */
 
@@ -86,24 +90,24 @@
     flex-direction: column;
     gap: 2px;
     padding: 8px 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--sm-fill-2);
+    border: 1px solid var(--sm-border-soft);
 }
 .sm-sb-current-label {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
 }
 .sm-sb-current-name {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
 }
 
 .sm-sb-count {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     margin-left: 4px;
 }
 
@@ -124,17 +128,17 @@
     cursor: pointer;
     transition: background 0.15s;
 }
-.sm-sb-chat-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sm-sb-chat-row:hover { background: var(--sm-fill-2); }
 .sm-sb-chat-name {
     flex: 1;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--sm-text-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.sm-sb-chat-owned .sm-sb-chat-name { color: rgba(255, 255, 255, 0.45); }
-.sm-sb-chat-owner { font-size: 10px; color: rgba(200, 170, 110, 0.8); flex-shrink: 0; }
+.sm-sb-chat-owned .sm-sb-chat-name { color: var(--sm-text-dim); }
+.sm-sb-chat-owner { font-size: 10px; color: var(--sm-tag-npc-fg); flex-shrink: 0; }
 
 /* checkbox reuse from modal.css scope — replicate for the sidebar panel */
 .sm-sb-panel input[type='checkbox'] {
@@ -143,7 +147,7 @@
     width: 1.1em;
     height: 1.1em;
     border-radius: 4px;
-    background-color: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.2));
+    background-color: var(--SmartThemeBlurTintColor, var(--sm-inset));
     border: 2px solid var(--SmartThemeBorderColor);
     display: grid;
     place-content: center;
@@ -162,8 +166,8 @@
     flex-direction: column;
     gap: 7px;
     padding: 10px;
-    background: rgba(180, 160, 140, 0.06);
-    border: 1px solid rgba(180, 160, 140, 0.18);
+    background: var(--sm-accent-wash);
+    border: 1px solid var(--sm-accent-bg);
 }
 .sm-sb-assign-go { justify-content: center; }
 
@@ -180,27 +184,27 @@
     gap: 9px;
     padding: 7px 9px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--sm-fill-2);
+    border: 1px solid var(--sm-border-soft);
     transition: background 0.15s, border-color 0.15s;
 }
 .sm-sb-sl-row:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(180, 160, 140, 0.25);
+    background: var(--sm-fill-hover);
+    border-color: var(--sm-accent-border);
 }
-.sm-sb-sl-row > i { font-size: 12px; color: rgba(180, 160, 140, 0.6); }
+.sm-sb-sl-row > i { font-size: 12px; color: var(--sm-accent-line); }
 .sm-sb-sl-title {
     flex: 1;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--sm-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sm-sb-sl-count {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--sm-text-faint);
+    background: var(--sm-fill-hover);
     padding: 1px 7px;
     border-radius: 9px;
     flex-shrink: 0;

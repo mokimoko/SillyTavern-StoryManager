@@ -1,3 +1,7 @@
+/* THEME-ADAPTIVE (2026-07): colors now resolve via the --sm-* token layer
+ * defined in style.css (color-mix on --SmartTheme* tokens). Works on BOTH
+ * light and dark themes. Literals remaining are intentional var() fallbacks. */
+
 /* display.css — The aesthetic Display view (Phase 4)
  * Header-less, sidebar-less gallery: book shelf column + storyline grid +
  * storyline page. Built from the approved mock (story-manager-display-mock.html).
@@ -14,7 +18,7 @@
     position: fixed;
     inset: 0;
     z-index: 10000;
-    background: rgba(0, 0, 0, 0.55);
+    background: var(--sm-scrim);
     opacity: 0;
     transition: opacity 0.18s ease;
     pointer-events: none;
@@ -32,15 +36,15 @@
     width: 100vw;
     height: 100vh;
     z-index: 10001;
-    background: rgba(18, 18, 22, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border);
+    box-shadow: 0 24px 80px var(--sm-scrim);
     display: flex;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.18s ease, transform 0.18s ease;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     line-height: 1.5;
@@ -62,14 +66,14 @@
     z-index: 10;
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     font-size: 18px;
     cursor: pointer;
     padding: 4px 8px;
     transition: color 0.15s;
     font-family: inherit;
 }
-.sm-display-close:hover { color: rgba(255, 255, 255, 0.6); }
+.sm-display-close:hover { color: var(--sm-text-3); }
 
 /* ─── Management Toggle ──────────────────────────── */
 
@@ -78,9 +82,9 @@
     bottom: 14px;
     right: 16px;
     z-index: 10;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.3);
+    background: var(--sm-fill);
+    border: 1px solid var(--sm-border-soft);
+    color: var(--sm-text-faint);
     font-size: 11px;
     font-family: inherit;
     cursor: pointer;
@@ -91,8 +95,8 @@
     gap: 5px;
 }
 .sm-display-manage:hover {
-    color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.07);
+    color: var(--sm-text-3);
+    background: var(--sm-fill-hover);
 }
 
 /* ─── Cover backgrounds (real images) ────────────── */
@@ -108,11 +112,11 @@
     background-repeat: no-repeat;
 }
 .sm-cover-empty {
-    background: linear-gradient(150deg, #1c1c24 0%, #131319 60%, #1a1a22 100%);
+    background: linear-gradient(150deg, var(--sm-cover-a) 0%, var(--sm-cover-b) 60%, var(--sm-cover-c) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.12);
+    color: var(--sm-text-whisper);
 }
 .sm-cover-empty i { font-size: 1.6em; }
 
@@ -125,15 +129,15 @@
     flex-direction: column;
     align-items: center;
     padding: 10px 0;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.15);
+    border-right: 1px solid var(--sm-border-soft);
+    background: var(--sm-inset);
     gap: 0;
 }
 
 .sm-shelf-arrow {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.15);
+    color: var(--sm-text-whisper);
     font-size: 10px;
     cursor: pointer;
     padding: 6px 12px;
@@ -142,7 +146,7 @@
     width: 100%;
     text-align: center;
 }
-.sm-shelf-arrow:hover { color: rgba(255, 255, 255, 0.5); }
+.sm-shelf-arrow:hover { color: var(--sm-text-dim); }
 .sm-shelf-arrow:disabled { opacity: 0.25; cursor: default; }
 
 .sm-shelf-list {
@@ -164,14 +168,14 @@
     height: 147px;
     flex-shrink: 0;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--sm-border-soft);
     overflow: hidden;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-.sm-shelf-book:hover { border-color: rgba(180, 160, 140, 0.3); }
+.sm-shelf-book:hover { border-color: var(--sm-accent-border); }
 .sm-shelf-book.sm-shelf-active {
-    border-color: rgba(180, 160, 140, 0.5);
-    box-shadow: 0 0 12px rgba(180, 160, 140, 0.08);
+    border-color: var(--sm-accent-dim);
+    box-shadow: 0 0 12px var(--sm-accent-wash);
 }
 
 /* Hover tooltip for book title */
@@ -180,9 +184,9 @@
     left: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(12, 12, 16, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.85);
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border);
+    color: var(--sm-text);
     font-size: 12px;
     padding: 5px 10px;
     white-space: nowrap;
@@ -199,23 +203,23 @@
     height: 147px;
     flex-shrink: 0;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--sm-border-soft);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     transition: border-color 0.2s, color 0.2s;
     position: relative;
 }
 .sm-shelf-all i { font-size: 22px; }
 .sm-shelf-all span { font-size: 10px; letter-spacing: 0.3px; }
-.sm-shelf-all:hover { border-color: rgba(180, 160, 140, 0.3); color: rgba(255, 255, 255, 0.55); }
+.sm-shelf-all:hover { border-color: var(--sm-accent-border); color: var(--sm-text-3); }
 .sm-shelf-all.sm-shelf-active {
-    border-color: rgba(180, 160, 140, 0.5);
-    color: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 0 12px rgba(180, 160, 140, 0.08);
+    border-color: var(--sm-accent-dim);
+    color: var(--sm-text-2);
+    box-shadow: 0 0 12px var(--sm-accent-wash);
 }
 
 /* ─── Book Detail Panel (between shelf + grid) ──── */
@@ -228,12 +232,12 @@
     opacity: 0;
     transition: width 0.25s ease, opacity 0.2s ease 0.05s;
     border-right: 1px solid transparent;
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--sm-inset-soft);
 }
 .sm-book-detail.sm-book-detail-visible {
     width: 350px;
     opacity: 1;
-    border-right-color: rgba(255, 255, 255, 0.04);
+    border-right-color: var(--sm-border-faint);
 }
 
 .sm-book-detail-inner {
@@ -245,19 +249,19 @@
     height: 100%;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(180, 160, 140, 0.12) transparent;
+    scrollbar-color: var(--sm-accent-wash) transparent;
 }
 .sm-book-detail-inner::-webkit-scrollbar { width: 4px; }
 .sm-book-detail-inner::-webkit-scrollbar-track { background: transparent; }
-.sm-book-detail-inner::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.12); }
+.sm-book-detail-inner::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
 
 /* Cover — large, 3:4 ratio */
 .sm-book-detail-cover {
     width: 100%;
     aspect-ratio: 3 / 4;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--sm-border);
+    box-shadow: 0 4px 20px var(--sm-scrim-thumb);
     margin-bottom: 14px;
     flex-shrink: 0;
 }
@@ -273,13 +277,13 @@
 .sm-book-detail-title {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     line-height: 1.35;
     margin-bottom: 3px;
 }
 .sm-book-detail-count {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     margin-bottom: 16px;
 }
 
@@ -292,7 +296,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     margin-bottom: 8px;
 }
 
@@ -306,21 +310,22 @@
     display: inline-block;
     padding: 3px 9px;
     font-size: 11px;
-    background: var(--sttag-bg, rgba(255,255,255,0.08));
-    color: var(--sttag-fg, rgba(255,255,255,0.85));
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: color-mix(in srgb, var(--sttag-bg, var(--sm-fill)) 70%, transparent);
+    color: var(--sm-text);
+    text-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--sttag-bg, var(--sm-border)) 60%, transparent);
     white-space: nowrap;
 }
 
 /* Description */
 .sm-book-detail-desc {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--sm-text-3);
     line-height: 1.65;
 }
 .sm-book-detail-desc.sm-muted {
     font-style: italic;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
 }
 
 /* ─── Main Area ──────────────────────────────────── */
@@ -345,12 +350,12 @@
 .sm-grid-book-title {
     font-size: 16px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--sm-text-2);
     letter-spacing: 0.3px;
 }
 .sm-grid-book-meta {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--sm-text-faint);
     margin-top: 2px;
 }
 
@@ -358,24 +363,24 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--sm-fill);
+    border: 1px solid var(--sm-border-soft);
     padding: 5px 11px;
     width: 220px;
     flex-shrink: 0;
     margin-right: 32px; /* clear the ✕ close button */
 }
-.sm-display-search i { color: rgba(255, 255, 255, 0.2); font-size: 12px; }
+.sm-display-search i { color: var(--sm-text-ghost); font-size: 12px; }
 .sm-display-search input {
     background: none;
     border: none;
     outline: none;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--sm-text-2);
     font-size: 12px;
     font-family: inherit;
     width: 100%;
 }
-.sm-display-search input::placeholder { color: rgba(255, 255, 255, 0.2); }
+.sm-display-search input::placeholder { color: var(--sm-text-ghost); }
 
 /* ─── Storyline Grid ─────────────────────────────── */
 
@@ -384,7 +389,7 @@
     overflow-y: auto;
     padding: 4px 24px 60px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(180, 160, 140, 0.15) transparent;
+    scrollbar-color: var(--sm-accent-wash) transparent;
 }
 
 .sm-grid-cards {
@@ -404,19 +409,19 @@
     width: 100%;
     aspect-ratio: 3 / 4;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--sm-border-soft);
     transition: border-color 0.2s;
     position: relative;
 }
-.sm-grid-card:hover .sm-grid-cover { border-color: rgba(180, 160, 140, 0.3); }
+.sm-grid-card:hover .sm-grid-cover { border-color: var(--sm-accent-border); }
 
 /* Chat count badge on cover */
 .sm-grid-count {
     position: absolute;
     bottom: 6px;
     right: 6px;
-    background: rgba(0, 0, 0, 0.7);
-    color: rgba(255, 255, 255, 0.7);
+    background: var(--sm-scrim-strong);
+    color: var(--sm-text-2);
     font-size: 10px;
     padding: 2px 6px;
     display: flex;
@@ -428,7 +433,7 @@
 .sm-grid-title {
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     margin-bottom: 5px;
     white-space: nowrap;
     overflow: hidden;
@@ -447,10 +452,10 @@
     border: 1px solid transparent;
     white-space: nowrap;
 }
-.sm-dtag-character { background: rgba(120, 150, 200, 0.15); border-color: rgba(120, 150, 200, 0.28); color: rgba(160, 185, 220, 0.9); }
-.sm-dtag-persona   { background: rgba(180, 140, 200, 0.15); border-color: rgba(180, 140, 200, 0.28); color: rgba(200, 170, 220, 0.9); }
-.sm-dtag-npc       { background: rgba(200, 170, 110, 0.15); border-color: rgba(200, 170, 110, 0.28); color: rgba(210, 185, 130, 0.9); }
-.sm-dtag-freeform  { background: rgba(140, 180, 150, 0.15); border-color: rgba(140, 180, 150, 0.28); color: rgba(165, 200, 170, 0.9); }
+.sm-dtag-character { background: var(--sm-tag-char-bg); border-color: var(--sm-tag-char-bd); color: var(--sm-tag-char-fg); }
+.sm-dtag-persona   { background: var(--sm-tag-persona-bg); border-color: var(--sm-tag-persona-bd); color: var(--sm-tag-persona-fg); }
+.sm-dtag-npc       { background: var(--sm-tag-npc-bg); border-color: var(--sm-tag-npc-bd); color: var(--sm-tag-npc-fg); }
+.sm-dtag-freeform  { background: var(--sm-tag-free-bg); border-color: var(--sm-tag-free-bd); color: var(--sm-tag-free-fg); }
 
 /* ─── Grid Card Tooltip (hover description) ──────── */
 
@@ -460,40 +465,40 @@
     left: 50%;
     transform: translateX(-50%);
     width: 260px;
-    background: rgba(12, 12, 16, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border);
     padding: 10px 12px;
     z-index: 30;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 20px var(--sm-shadow);
 }
 .sm-grid-card:hover .sm-grid-tooltip { opacity: 1; }
 .sm-grid-tooltip-title {
     font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sm-text);
     margin-bottom: 4px;
 }
 .sm-grid-tooltip-timespan {
     font-size: 10px;
-    color: rgba(180, 160, 140, 0.6);
+    color: var(--sm-accent-line);
     margin-bottom: 6px;
 }
 .sm-grid-tooltip-desc {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--sm-text-3);
     line-height: 1.55;
     max-height: 100px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: var(--sm-text-whisper) transparent;
 }
-.sm-grid-tooltip-desc.sm-muted { font-style: italic; color: rgba(255, 255, 255, 0.3); }
+.sm-grid-tooltip-desc.sm-muted { font-style: italic; color: var(--sm-text-faint); }
 
 /* ─── Empty / muted helpers ──────────────────────── */
-.sm-muted { color: rgba(255, 255, 255, 0.3); font-style: italic; }
+.sm-muted { color: var(--sm-text-faint); font-style: italic; }
 
 /* ─── Storyline Page ─────────────────────────────── */
 
@@ -502,7 +507,7 @@
     overflow-y: auto;
     padding: 0 0 60px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(180, 160, 140, 0.15) transparent;
+    scrollbar-color: var(--sm-accent-wash) transparent;
 }
 
 .sm-page-back {
@@ -511,14 +516,14 @@
     gap: 6px;
     padding: 10px 24px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     cursor: pointer;
     transition: color 0.15s;
     background: none;
     border: none;
     font-family: inherit;
 }
-.sm-page-back:hover { color: rgba(255, 255, 255, 0.7); }
+.sm-page-back:hover { color: var(--sm-text-2); }
 
 /* Hero banner */
 .sm-page-hero {
@@ -536,7 +541,7 @@
     left: 0;
     right: 0;
     height: 280px;
-    background: linear-gradient(transparent, rgba(18, 18, 22, 0.97));
+    background: linear-gradient(transparent, var(--sm-bg-modal));
 }
 
 /* Cover + info row — overlaps the hero */
@@ -555,8 +560,8 @@
     height: 347px; /* 3:4 ratio — matches book cover exactly */
     flex-shrink: 0;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--sm-border);
+    box-shadow: 0 6px 28px var(--sm-shadow);
 }
 
 .sm-page-cover .sm-cover-bg,
@@ -575,7 +580,7 @@
 .sm-page-title {
     font-size: 22px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.92);
+    color: var(--sm-text-strong);
     letter-spacing: 0.2px;
     margin-bottom: 8px;
     line-height: 1.3;
@@ -586,13 +591,13 @@
 
 .sm-page-timespan {
     font-size: 11px;
-    color: rgba(180, 160, 140, 0.55);
+    color: var(--sm-accent-line);
     margin-bottom: 12px;
     letter-spacing: 0.3px;
 }
 .sm-page-desc {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--sm-text-3);
     line-height: 1.65;
     margin-bottom: 18px;
 }
@@ -608,7 +613,7 @@
 
 .sm-page-divider {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--sm-border-soft);
     margin: 0 0 18px;
 }
 
@@ -617,7 +622,7 @@
 .sm-page-chats-label {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--sm-text-faint);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 12px;
@@ -627,12 +632,12 @@
     display: flex;
     gap: 14px;
     padding: 10px 4px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--sm-border-ghost);
     cursor: pointer;
     transition: background 0.12s;
     margin: 0 -4px;
 }
-.sm-page-chat:hover { background: rgba(255, 255, 255, 0.02); }
+.sm-page-chat:hover { background: var(--sm-fill-faint); }
 .sm-page-chat:last-child { border-bottom: none; }
 
 .sm-page-chat-order {
@@ -641,7 +646,7 @@
     text-align: center;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(180, 160, 140, 0.4);
+    color: var(--sm-accent-faint);
     padding-top: 2px;
 }
 
@@ -650,23 +655,23 @@
     height: 52px;
     flex-shrink: 0;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--sm-border-soft);
 }
 .sm-page-chat-thumb-empty {
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--sm-fill-faint);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.1);
+    color: var(--sm-text-whisper);
     font-size: 16px;
 }
 
 .sm-page-chat-body { flex: 1; min-width: 0; }
 .sm-page-chat-name {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--sm-text-2);
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -674,18 +679,18 @@
 }
 .sm-page-chat-blurb {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--sm-text-dim);
     line-height: 1.5;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.sm-page-chat-blurb.sm-muted { font-style: italic; color: rgba(255, 255, 255, 0.25); }
+.sm-page-chat-blurb.sm-muted { font-style: italic; color: var(--sm-text-ghost); }
 
 .sm-page-chat-chrono {
     flex-shrink: 0;
     font-size: 11px;
-    color: rgba(180, 160, 140, 0.45);
+    color: var(--sm-accent-dim);
     font-style: italic;
     padding-top: 2px;
     text-align: right;
@@ -700,9 +705,9 @@
     z-index: 10010;
     display: flex;
     gap: 0;
-    background: rgba(12, 12, 16, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border);
+    box-shadow: 0 4px 24px var(--sm-scrim);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.12s;
@@ -727,26 +732,26 @@
     max-height: 140px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: var(--sm-text-whisper) transparent;
 }
 .sm-chat-detail-title {
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--sm-text-3);
     margin-bottom: 2px;
 }
 .sm-chat-detail-chrono {
     font-size: 10px;
-    color: rgba(180, 160, 140, 0.45);
+    color: var(--sm-accent-dim);
     font-style: italic;
     margin-bottom: 8px;
 }
 .sm-chat-detail-desc {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--sm-text-3);
     line-height: 1.6;
 }
-.sm-chat-detail-desc.sm-muted { color: rgba(255, 255, 255, 0.3); }
+.sm-chat-detail-desc.sm-muted { color: var(--sm-text-faint); }
 
 /* ─── Empty states ───────────────────────────────── */
 
@@ -757,13 +762,13 @@
     justify-content: center;
     height: 100%;
     gap: 10px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     text-align: center;
     padding: 0 24px;
 }
 .sm-display-empty-icon { font-size: 32px; opacity: 0.5; }
 .sm-display-empty-text { font-size: 13px; }
-.sm-display-empty-hint { font-size: 11px; color: rgba(255, 255, 255, 0.15); }
+.sm-display-empty-hint { font-size: 11px; color: var(--sm-text-whisper); }
 
 /* ─── Scrollbars ─────────────────────────────────── */
 .sm-grid::-webkit-scrollbar,
@@ -771,9 +776,9 @@
 .sm-grid::-webkit-scrollbar-track,
 .sm-page::-webkit-scrollbar-track { background: transparent; }
 .sm-grid::-webkit-scrollbar-thumb,
-.sm-page::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.15); }
+.sm-page::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
 .sm-grid::-webkit-scrollbar-thumb:hover,
-.sm-page::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 140, 0.3); }
+.sm-page::-webkit-scrollbar-thumb:hover { background: var(--sm-accent-border); }
 
 /* ─── Playlist Panel (DAR integration) ───────────── */
 /* Shown on the storyline page when a Dynamic Audio playlist is linked.
@@ -803,8 +808,8 @@
     height: 300px;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--sm-border);
+    box-shadow: 0 6px 28px var(--sm-shadow);
 }
 
 .sm-page-playlist-cover img {
@@ -817,11 +822,11 @@
 .sm-page-playlist-empty {
     width: 100%;
     height: 100%;
-    background: linear-gradient(150deg, #1c1c24 0%, #131319 60%, #1a1a22 100%);
+    background: linear-gradient(150deg, var(--sm-cover-a) 0%, var(--sm-cover-b) 60%, var(--sm-cover-c) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.1);
+    color: var(--sm-text-whisper);
     font-size: 48px;
 }
 
@@ -847,13 +852,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
-    color: rgba(255, 255, 255, 0.85);
+    background: var(--sm-scrim);
+    color: var(--sm-text);
     font-size: 20px;
     opacity: 0;
     transition: opacity 0.2s ease, transform 0.15s ease;
     backdrop-filter: blur(4px);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 12px var(--sm-shadow);
 }
 
 .sm-page-playlist-cover:hover .sm-page-playlist-play i {
@@ -870,7 +875,7 @@
  * the row showing gallery images and quotes. Lazy-loaded on first click. */
 
 .sm-page-chat-wrapper {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--sm-border-ghost);
 }
 .sm-page-chat-wrapper:last-child { border-bottom: none; }
 
@@ -888,7 +893,7 @@
     justify-content: center;
     background: none;
     border: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.15);
+    color: var(--sm-text-whisper);
     cursor: pointer;
     transition: color 0.15s, transform 0.2s, border-color 0.15s;
     padding: 0;
@@ -896,8 +901,8 @@
     align-self: center;
 }
 .sm-page-chat-expand:hover {
-    color: rgba(255, 255, 255, 0.45);
-    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--sm-text-dim);
+    border-color: var(--sm-border-soft);
 }
 
 /* Goto button — opens the chat in ST */
@@ -910,7 +915,7 @@
     justify-content: center;
     background: none;
     border: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.15);
+    color: var(--sm-text-whisper);
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;
     padding: 0;
@@ -918,8 +923,8 @@
     align-self: center;
 }
 .sm-page-chat-goto:hover {
-    color: rgba(180, 160, 140, 0.7);
-    border-color: rgba(180, 160, 140, 0.2);
+    color: var(--sm-accent-text);
+    border-color: var(--sm-accent-bg);
 }
 
 /* Expandable rows get a pointer and a subtle hover cue */
@@ -928,16 +933,16 @@
 }
 /* Subtle dot indicator when chat has stored images/quotes */
 .sm-page-chat-expand.sm-has-details {
-    color: rgba(180, 160, 140, 0.35);
+    color: var(--sm-accent-faint);
 }
 .sm-page-chat-expand.sm-has-details:hover {
-    color: rgba(180, 160, 140, 0.7);
+    color: var(--sm-accent-text);
 }
 
 /* Rotated chevron when expanded */
 .sm-page-chat-expand.sm-expanded {
     transform: rotate(180deg);
-    color: rgba(180, 160, 140, 0.55);
+    color: var(--sm-accent-line);
 }
 
 /* ─── Detail Panel (accordion body) ──────────────── */
@@ -955,14 +960,14 @@
 
 .sm-page-details-loading {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     font-style: italic;
     padding: 8px 0;
 }
 
 .sm-page-details-empty {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     font-style: italic;
     padding: 8px 0;
 }
@@ -977,7 +982,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--sm-text-ghost);
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -994,24 +999,24 @@
     overflow-y: hidden;
     padding-bottom: 4px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(180, 160, 140, 0.12) transparent;
+    scrollbar-color: var(--sm-accent-wash) transparent;
 }
 .sm-page-details-gallery::-webkit-scrollbar { height: 4px; }
 .sm-page-details-gallery::-webkit-scrollbar-track { background: transparent; }
-.sm-page-details-gallery::-webkit-scrollbar-thumb { background: rgba(180, 160, 140, 0.12); }
+.sm-page-details-gallery::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
 
 .sm-page-details-img {
     flex-shrink: 0;
     width: 120px;
     cursor: pointer;
     transition: transform 0.12s, box-shadow 0.15s;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--sm-border-soft);
     overflow: hidden;
 }
 .sm-page-details-img:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-    border-color: rgba(180, 160, 140, 0.25);
+    box-shadow: 0 4px 12px var(--sm-scrim-thumb);
+    border-color: var(--sm-accent-border);
 }
 
 .sm-page-details-img img {
@@ -1023,12 +1028,12 @@
 
 .sm-page-details-img-caption {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--sm-text-dim);
     padding: 4px 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--sm-inset);
 }
 
 /* ─── Quotes ─────────────────────────────────────── */
@@ -1042,18 +1047,18 @@
 .sm-page-details-quote {
     margin: 0;
     padding: 10px 14px;
-    border-left: 2px solid rgba(180, 160, 140, 0.25);
-    background: rgba(255, 255, 255, 0.015);
+    border-left: 2px solid var(--sm-accent-border);
+    background: var(--sm-fill-ghost);
 }
 
 /* Auto-pulled quotes get a slightly different accent */
 .sm-page-details-quote.sm-quote-auto {
-    border-left-color: rgba(120, 150, 200, 0.3);
+    border-left-color: var(--sm-tag-char-bd);
 }
 
 .sm-page-details-quote-text {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--sm-text-3);
     line-height: 1.6;
     font-style: italic;
 }
@@ -1061,14 +1066,14 @@
 .sm-page-details-quote-speaker {
     display: block;
     font-size: 11px;
-    color: rgba(180, 160, 140, 0.55);
+    color: var(--sm-accent-line);
     font-style: normal;
     margin-top: 6px;
 }
 
 .sm-page-details-quote-context {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.2);
+    color: var(--sm-text-ghost);
     margin-top: 4px;
     line-height: 1.45;
 }
@@ -1091,7 +1096,7 @@
 .sm-lightbox-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--sm-scrim-strong);
 }
 
 .sm-lightbox-content {
@@ -1107,13 +1112,13 @@
     max-width: 90vw;
     max-height: 85vh;
     object-fit: contain;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 8px 40px var(--sm-scrim);
 }
 
 .sm-lightbox-caption {
     margin-top: 10px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--sm-text-3);
     text-align: center;
     max-width: 500px;
 }
@@ -1130,14 +1135,14 @@
     padding: 6px 0;
     background: none;
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.2);
+    border-top: 1px solid var(--sm-border-faint);
+    color: var(--sm-text-ghost);
     font-size: 11px;
     font-family: inherit;
     cursor: pointer;
     transition: color 0.15s;
 }
-.sm-page-details-close:hover { color: rgba(255, 255, 255, 0.5); }
+.sm-page-details-close:hover { color: var(--sm-text-dim); }
 .sm-page-details-close i { font-size: 9px; }
 
 
@@ -1159,7 +1164,7 @@
 }
 .sm-page-chat-wordcount {
     font-size: 10px;
-    color: rgba(180, 160, 140, 0.4);
+    color: var(--sm-accent-faint);
     white-space: nowrap;
     letter-spacing: 0.2px;
 }
@@ -1179,7 +1184,7 @@
 .sm-page-title-words {
     font-size: 11px;
     font-weight: 500;
-    color: rgba(180, 160, 140, 0.5);
+    color: var(--sm-accent-dim);
     white-space: nowrap;
     letter-spacing: 0.3px;
 }
@@ -1192,7 +1197,7 @@
 /* Book total — sits under the storyline count in the book detail panel. */
 .sm-book-detail-words {
     font-size: 11px;
-    color: rgba(180, 160, 140, 0.5);
+    color: var(--sm-accent-dim);
     margin-top: -12px;   /* pull up toward the storyline count above it */
     margin-bottom: 16px;
     letter-spacing: 0.2px;

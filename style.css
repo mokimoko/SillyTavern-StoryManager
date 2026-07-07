@@ -1,12 +1,130 @@
-/* style.css — Shared/global styles for StoryManager
- * Phase 1: stub. Wand-menu button + any global tokens live here.
- * Nebula Dark vocabulary (shared with modal.css):
- *   --sm-bg: rgba(20, 20, 24, 0.96)
+/* style.css — Shared/global styles + theme-adaptive token layer for StoryManager
+ *
+ * THEME ADAPTATION (2026-07): the whole suite now adapts to BOTH light and
+ * dark SillyTavern themes. This file owns the canonical --sm-* token layer.
+ * Surfaces keep a frosted dark/tint feel; text, borders, and accents follow
+ * the active theme via --SmartTheme* tokens (color-mix on --SmartThemeBodyColor).
+ *
+ * Scoping: StoryManager renders its top-level containers directly under <body>
+ * (overlay, modal, sidebar panel, display frame, lightbox — all siblings, none
+ * nested). Custom properties inherit to descendants, so the token block is
+ * scoped to every top-level container rather than :root. This keeps the tokens
+ * out of the global namespace while still resolving for every child rule across
+ * modal.css / sidebar.css / display.css.
+ *
+ * Vocabulary origin: "Nebula Dark" — muted taupe accent (180,160,140), dark
+ * frosted surfaces. The taupe identity is preserved via a tone-adaptive mix
+ * (stays taupe, brightens on dark themes, mutes on light) rather than dropped.
  */
-:root {
-    --sm-bg: rgba(20, 20, 24, 0.96);
-    --sm-border: rgba(255, 255, 255, 0.08);
-    --sm-accent: rgba(140, 140, 160, 0.9);
+
+.sm-overlay,
+.sm-modal,
+.sm-sb-panel,
+.sm-display-backdrop,
+.sm-display,
+.sm-lightbox {
+    /* ── Surfaces ──────────────────────────────────────────────
+       Modal/panel/display bodies: frosted theme tint over a dark base.
+       Falls back to the original near-black if the tint token is absent. */
+    --sm-bg-modal: var(--SmartThemeBlurTintColor, rgba(18, 18, 22, 0.97));
+    /* Section/panel insets — body-color tint, NOT a fixed black scrim, so they
+       read as subtle depth on BOTH themes (gentle lift on dark, faint shade on
+       light). Lesson carried from the Dynamic Events conversion. */
+    --sm-inset:        color-mix(in srgb, var(--SmartThemeBodyColor) 5%, transparent);
+    --sm-inset-soft:   color-mix(in srgb, var(--SmartThemeBodyColor) 3%, transparent);
+
+    /* ── Surface fills (hover washes, chip/card backgrounds) ───
+       Were literal rgba(255,255,255, low). Now body-color mixes. */
+    --sm-fill:         color-mix(in srgb, var(--SmartThemeBodyColor) 4%, transparent);
+    --sm-fill-2:       color-mix(in srgb, var(--SmartThemeBodyColor) 3%, transparent);
+    --sm-fill-hover:   color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent);
+    --sm-fill-faint:   color-mix(in srgb, var(--SmartThemeBodyColor) 2%, transparent);
+    --sm-fill-ghost:   color-mix(in srgb, var(--SmartThemeBodyColor) 1.5%, transparent);
+
+    /* ── Text tiers ────────────────────────────────────────────
+       6+ tiers, all color-mix on --SmartThemeBodyColor. */
+    --sm-text-strong:  color-mix(in srgb, var(--SmartThemeBodyColor) 92%, transparent);
+    --sm-text:         color-mix(in srgb, var(--SmartThemeBodyColor) 85%, transparent);
+    --sm-text-2:       color-mix(in srgb, var(--SmartThemeBodyColor) 70%, transparent);
+    --sm-text-3:       color-mix(in srgb, var(--SmartThemeBodyColor) 55%, transparent);
+    --sm-text-dim:     color-mix(in srgb, var(--SmartThemeBodyColor) 40%, transparent);
+    --sm-text-faint:   color-mix(in srgb, var(--SmartThemeBodyColor) 30%, transparent);
+    --sm-text-ghost:   color-mix(in srgb, var(--SmartThemeBodyColor) 20%, transparent);
+    --sm-text-whisper: color-mix(in srgb, var(--SmartThemeBodyColor) 12%, transparent);
+
+    /* ── Borders ───────────────────────────────────────────────
+       4 tiers, body-color mixes (were rgba(255,255,255, low)). */
+    --sm-border:       color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent);
+    --sm-border-soft:  color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent);
+    --sm-border-faint: color-mix(in srgb, var(--SmartThemeBodyColor) 4%, transparent);
+    --sm-border-ghost: color-mix(in srgb, var(--SmartThemeBodyColor) 3%, transparent);
+
+    /* ── Accent (taupe "Nebula" signature) ─────────────────────
+       Tone-adaptive: mix the taupe base with body color so it stays clearly
+       taupe but brightens on dark themes / mutes on light. Base maps toward
+       --SmartThemeQuoteColor where a themed accent reads better (checkboxes,
+       scrollbar-thumb hover already use QuoteColor directly). */
+    --sm-accent-base:   color-mix(in srgb, rgb(180, 160, 140) 82%, var(--SmartThemeBodyColor) 18%);
+    --sm-accent-wash:   color-mix(in srgb, var(--sm-accent-base) 14%, transparent);
+    --sm-accent-bg:     color-mix(in srgb, var(--sm-accent-base) 20%, transparent);
+    --sm-accent-hover:  color-mix(in srgb, var(--sm-accent-base) 30%, transparent);
+    --sm-accent-border: color-mix(in srgb, var(--sm-accent-base) 25%, transparent);
+    --sm-accent-line:   color-mix(in srgb, var(--sm-accent-base) 50%, transparent);
+    --sm-accent-text:   color-mix(in srgb, var(--sm-accent-base) 70%, transparent);
+    --sm-accent-dim:    color-mix(in srgb, var(--sm-accent-base) 45%, transparent);
+    --sm-accent-faint:  color-mix(in srgb, var(--sm-accent-base) 30%, transparent);
+    --sm-accent-strong: color-mix(in srgb, var(--sm-accent-base) 95%, transparent);
+
+    /* ── Semantic tag colors (character/persona/npc/freeform) ──
+       Each keeps its hue identity, tone-adapts via body-color mix. */
+    --sm-tag-char-base:  color-mix(in srgb, rgb(120, 150, 200) 80%, var(--SmartThemeBodyColor) 20%);
+    --sm-tag-char-bg:    color-mix(in srgb, var(--sm-tag-char-base) 16%, transparent);
+    --sm-tag-char-bd:    color-mix(in srgb, var(--sm-tag-char-base) 30%, transparent);
+    --sm-tag-char-fg:    color-mix(in srgb, var(--sm-tag-char-base) 88%, var(--SmartThemeBodyColor));
+
+    --sm-tag-persona-base: color-mix(in srgb, rgb(180, 140, 200) 80%, var(--SmartThemeBodyColor) 20%);
+    --sm-tag-persona-bg:   color-mix(in srgb, var(--sm-tag-persona-base) 16%, transparent);
+    --sm-tag-persona-bd:   color-mix(in srgb, var(--sm-tag-persona-base) 30%, transparent);
+    --sm-tag-persona-fg:   color-mix(in srgb, var(--sm-tag-persona-base) 88%, var(--SmartThemeBodyColor));
+
+    --sm-tag-npc-base:   color-mix(in srgb, rgb(200, 170, 110) 80%, var(--SmartThemeBodyColor) 20%);
+    --sm-tag-npc-bg:     color-mix(in srgb, var(--sm-tag-npc-base) 16%, transparent);
+    --sm-tag-npc-bd:     color-mix(in srgb, var(--sm-tag-npc-base) 30%, transparent);
+    --sm-tag-npc-fg:     color-mix(in srgb, var(--sm-tag-npc-base) 88%, var(--SmartThemeBodyColor));
+
+    --sm-tag-free-base:  color-mix(in srgb, rgb(140, 180, 150) 80%, var(--SmartThemeBodyColor) 20%);
+    --sm-tag-free-bg:    color-mix(in srgb, var(--sm-tag-free-base) 16%, transparent);
+    --sm-tag-free-bd:    color-mix(in srgb, var(--sm-tag-free-base) 30%, transparent);
+    --sm-tag-free-fg:    color-mix(in srgb, var(--sm-tag-free-base) 88%, var(--SmartThemeBodyColor));
+
+    /* NPC/owner badge gold (200,170,110) reused for chat-owner labels. */
+    --sm-owner-fg:       color-mix(in srgb, var(--sm-tag-npc-base) 85%, var(--SmartThemeBodyColor));
+
+    /* ── Status colors (gen ok / err) — semantic, tone-adapt ──── */
+    --sm-ok:    color-mix(in srgb, rgb(120, 180, 120) 75%, var(--SmartThemeBodyColor) 25%);
+    --sm-err:   color-mix(in srgb, rgb(220, 100, 100) 78%, var(--SmartThemeBodyColor) 22%);
+
+    /* ── Danger (delete/remove) — stays clearly red on both ───── */
+    --sm-danger:       rgba(220, 80, 80, 0.6);
+    --sm-danger-hover: rgba(220, 80, 80, 0.9);
+    --sm-danger-soft:  rgba(200, 100, 100, 0.7);
+    --sm-danger-text:  rgba(220, 110, 110, 0.9);
+
+    /* ── Dark scrims / overlays — intentionally dark on BOTH ────
+       Overlay dimmers and image-caption strips stay dark scrims so modals and
+       lightboxes read as "above" the app regardless of theme. */
+    --sm-scrim:        rgba(0, 0, 0, 0.55);
+    --sm-scrim-strong: rgba(0, 0, 0, 0.85);
+    --sm-scrim-caption: rgba(0, 0, 0, 0.6);
+    --sm-scrim-thumb:  rgba(0, 0, 0, 0.3);
+    --sm-shadow:       rgba(0, 0, 0, 0.45);
+
+    /* ── Empty-cover gradient endpoints (neutral placeholder art) ─
+       Kept as a fixed dark gradient — it's placeholder "no image" art, not a
+       theme surface. Reads as neutral on both themes. */
+    --sm-cover-a: #1c1c24;
+    --sm-cover-b: #131319;
+    --sm-cover-c: #1a1a22;
 }
 
 /* Wand-menu entry button */
