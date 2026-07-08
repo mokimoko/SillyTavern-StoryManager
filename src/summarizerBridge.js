@@ -104,6 +104,30 @@ export async function getQuotesForChats(filenames) {
 }
 
 /**
+ * Presence-only check for a set of chats: does each have summary text and/or
+ * summary quotes? One cached archive read, no per-chat fetches. Used by the
+ * storyline page to decide which rows get a "has details" dot + click popup.
+ * Returns { [filename]: { hasText: boolean, hasQuotes: boolean } }.
+ * Chats with no archive entry are simply absent from the map.
+ */
+export async function getSummaryPresenceForChats(filenames) {
+    const archive = await loadArchive();
+    const result = {};
+    if (!archive?.summaries) return result;
+
+    for (const fn of filenames) {
+        const summary = archive.summaries[fn];
+        if (!summary) continue;
+        const hasText = !!summary.text?.trim();
+        const hasQuotes = Array.isArray(summary.quotes) && summary.quotes.length > 0;
+        if (hasText || hasQuotes) {
+            result[fn] = { hasText, hasQuotes };
+        }
+    }
+    return result;
+}
+
+/**
  * Invalidate the cache (e.g. if the user just generated a new summary).
  */
 export function invalidateCache() {

@@ -36,10 +36,14 @@ let initialized = false;
 
 function loadStylesheets() {
     const sheets = ['sidebar.css', 'modal.css', 'display.css'];
+    // Cache-bust with a per-load timestamp. Without a changing query string the
+    // browser reuses the cached copy at the identical URL, so CSS edits wouldn't
+    // show on a normal refresh. Date.now() forces a fresh fetch each load.
+    const bust = Date.now();
     for (const sheet of sheets) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = `/scripts/extensions/third-party/${EXTENSION_DIR}/${sheet}`;
+        link.href = `/scripts/extensions/third-party/${EXTENSION_DIR}/${sheet}?v=${bust}`;
         document.head.appendChild(link);
     }
 }

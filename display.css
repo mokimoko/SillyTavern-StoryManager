@@ -404,6 +404,9 @@
     position: relative;
 }
 .sm-grid-card:hover { transform: translateY(-2px); }
+/* Lift the hovered card (and thus its tooltip) above sibling cards, so the
+   tooltip never paints behind the card in the next row. */
+.sm-grid-card:hover { z-index: 40; }
 
 .sm-grid-cover {
     width: 100%;
@@ -461,6 +464,8 @@
 
 .sm-grid-tooltip {
     position: absolute;
+    /* Default: point UP — sit above the card. First-row cards get
+       .sm-tooltip-below (set in JS) to flip downward instead. */
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
@@ -474,7 +479,34 @@
     transition: opacity 0.15s;
     box-shadow: 0 4px 20px var(--sm-shadow);
 }
-.sm-grid-card:hover .sm-grid-tooltip { opacity: 1; }
+/* First-row cards: flip the tooltip below so it doesn't clip above the grid. */
+.sm-grid-card.sm-tooltip-below .sm-grid-tooltip {
+    bottom: auto;
+    top: calc(100% + 8px);
+}
+/* Invisible bridge covering the 8px gap so moving the mouse from the card
+   onto the tooltip doesn't drop the hover state before you reach it. The
+   bridge sits on the BOTTOM edge for an upward tooltip (default)... */
+.sm-grid-tooltip::before {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    right: 0;
+    height: 8px;
+}
+/* ...and on the TOP edge when the tooltip is flipped below the card. */
+.sm-grid-card.sm-tooltip-below .sm-grid-tooltip::before {
+    bottom: auto;
+    top: -8px;
+}
+/* Keep the tooltip alive + interactive while hovering either the card or the
+   tooltip itself, so its description can actually be scrolled. */
+.sm-grid-card:hover .sm-grid-tooltip,
+.sm-grid-tooltip:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
 .sm-grid-tooltip-title {
     font-size: 12px;
     font-weight: 600;
@@ -633,14 +665,17 @@
     gap: 14px;
     padding: 10px 4px;
     border-bottom: 1px solid var(--sm-border-ghost);
-    cursor: pointer;
+    cursor: default;
     transition: background 0.12s;
     margin: 0 -4px;
 }
+/* Only rows with detail content (summary / quotes / images) invite a click. */
+.sm-page-chat.sm-chat-clickable { cursor: pointer; }
 .sm-page-chat:hover { background: var(--sm-fill-faint); }
 .sm-page-chat:last-child { border-bottom: none; }
 
 .sm-page-chat-order {
+    position: relative;
     width: 22px;
     flex-shrink: 0;
     text-align: center;
@@ -648,6 +683,26 @@
     font-weight: 600;
     color: var(--sm-accent-faint);
     padding-top: 2px;
+}
+
+/* "Has details" dot — a subtle marker beside the chat name, shown only when the
+   chat has a summary, quotes, or images (see chatHasDetails in storylinePage.js).
+   Sits just after the title (flex sibling) so it reads as "there's more here"
+   without ever being clipped by the title's ellipsis. */
+.sm-chat-has-details {
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--sm-accent-text);
+    opacity: 0.85;
+    transition: opacity 0.12s, background 0.12s;
+    pointer-events: none;
+}
+/* Firm up the dot on hover of a clickable row, for a touch of feedback. */
+.sm-page-chat.sm-chat-clickable:hover .sm-chat-has-details {
+    opacity: 1;
+    background: var(--sm-accent-strong);
 }
 
 .sm-page-chat-thumb {
@@ -670,9 +725,16 @@
 
 .sm-page-chat-body { flex: 1; min-width: 0; }
 .sm-page-chat-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
     color: var(--sm-text-2);
     margin-bottom: 2px;
+    min-width: 0;
+}
+.sm-page-chat-name-text {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -705,9 +767,15 @@
     z-index: 10010;
     display: flex;
     gap: 0;
+    /* This panel is appended to <body>, OUTSIDE the .sm-display scope that
+       defines --sm-bg-modal, so that token wouldn't resolve here and the panel
+       rendered see-through (obvious once an image sits behind it). Re-derive
+       the SAME adaptive surface token the display frame uses, so it tracks the
+       theme's light/dark background exactly instead of a hardcoded fill. */
+    --sm-bg-modal: var(--SmartThemeBlurTintColor, rgba(18, 18, 22, 0.97));
     background: var(--sm-bg-modal);
-    border: 1px solid var(--sm-border);
-    box-shadow: 0 4px 24px var(--sm-scrim);
+    border: 1px solid var(--sm-border, color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent));
+    box-shadow: 0 4px 24px var(--sm-scrim, rgba(0, 0, 0, 0.55));
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.12s;
@@ -752,6 +820,277 @@
     line-height: 1.6;
 }
 .sm-chat-detail-desc.sm-muted { color: var(--sm-text-faint); }
+
+/* ─── Chat Detail Popup (click a chat row) ───────── */
+/* Centered dialog, appended to <body> — OUTSIDE the .sm-display scope where
+   --sm-* tokens live. Re-derive --sm-bg-modal from --SmartThemeBlurTintColor
+   (same as the display frame + hover panel) so it tracks the theme's
+   light/dark background. NEVER hardcode a fill here. */
+
+.sm-cd-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 15000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity 0.16s ease;
+}
+.sm-cd-modal.sm-cd-visible { opacity: 1; }
+
+.sm-cd-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--sm-scrim-strong, rgba(0, 0, 0, 0.6));
+    cursor: pointer;
+}
+
+.sm-cd-panel {
+    --sm-bg-modal: var(--SmartThemeBlurTintColor, rgba(18, 18, 22, 0.97));
+    /* The popup is appended to <body>, OUTSIDE .sm-display where the --sm-*
+       token layer is scoped, so NONE of those tokens resolve here — colors came
+       out transparent and the scrollbar fell back to browser white. Re-derive
+       every token the popup uses, copied verbatim from style.css so they track
+       the theme identically on light + dark. */
+    --sm-accent-base:   color-mix(in srgb, rgb(180, 160, 140) 82%, var(--SmartThemeBodyColor) 18%);
+    --sm-accent-wash:   color-mix(in srgb, var(--sm-accent-base) 14%, transparent);
+    --sm-accent-border: color-mix(in srgb, var(--sm-accent-base) 25%, transparent);
+    --sm-accent-line:   color-mix(in srgb, var(--sm-accent-base) 50%, transparent);
+    --sm-accent-text:   color-mix(in srgb, var(--sm-accent-base) 70%, transparent);
+    --sm-accent-dim:    color-mix(in srgb, var(--sm-accent-base) 45%, transparent);
+    --sm-inset:         color-mix(in srgb, var(--SmartThemeBodyColor) 5%, transparent);
+    --sm-fill-ghost:    color-mix(in srgb, var(--SmartThemeBodyColor) 1.5%, transparent);
+    --sm-text-2:        color-mix(in srgb, var(--SmartThemeBodyColor) 70%, transparent);
+    --sm-text-3:        color-mix(in srgb, var(--SmartThemeBodyColor) 55%, transparent);
+    --sm-text-faint:    color-mix(in srgb, var(--SmartThemeBodyColor) 30%, transparent);
+    --sm-text-ghost:    color-mix(in srgb, var(--SmartThemeBodyColor) 20%, transparent);
+    --sm-border-faint:  color-mix(in srgb, var(--SmartThemeBodyColor) 4%, transparent);
+    --sm-border-soft:   color-mix(in srgb, var(--SmartThemeBodyColor) 6%, transparent);
+    --sm-tag-char-base: color-mix(in srgb, rgb(120, 150, 200) 80%, var(--SmartThemeBodyColor) 20%);
+    --sm-tag-char-bd:   color-mix(in srgb, var(--sm-tag-char-base) 30%, transparent);
+    --sm-scrim-thumb:   rgba(0, 0, 0, 0.35);
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    max-height: 84vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--sm-bg-modal);
+    border: 1px solid var(--sm-border, color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent));
+    box-shadow: 0 8px 48px var(--sm-scrim, rgba(0, 0, 0, 0.55));
+    transform: translateY(8px) scale(0.99);
+    transition: transform 0.16s ease;
+}
+.sm-cd-modal.sm-cd-visible .sm-cd-panel { transform: none; }
+
+/* Header */
+.sm-cd-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--sm-border-faint);
+    flex-shrink: 0;
+}
+.sm-cd-header-text { flex: 1; min-width: 0; }
+.sm-cd-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sm-text-2);
+    line-height: 1.35;
+    word-break: break-word;
+}
+.sm-cd-chrono {
+    font-size: 11px;
+    color: var(--sm-accent-dim);
+    font-style: italic;
+    margin-top: 3px;
+}
+.sm-cd-goto,
+.sm-cd-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--sm-text-ghost);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 4px 6px;
+    transition: color 0.15s;
+}
+.sm-cd-goto:hover { color: var(--sm-accent-line); }
+.sm-cd-close:hover { color: var(--sm-text-2); }
+
+/* Body (scrolls) — thin scrollbar matching .sm-grid / .sm-page elsewhere. */
+.sm-cd-body {
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sm-accent-wash) transparent;
+}
+.sm-cd-body::-webkit-scrollbar { width: 5px; }
+.sm-cd-body::-webkit-scrollbar-track { background: transparent; }
+.sm-cd-body::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
+.sm-cd-body::-webkit-scrollbar-thumb:hover { background: var(--sm-accent-border); }
+.sm-cd-section { margin-bottom: 18px; }
+.sm-cd-section:last-child { margin-bottom: 0; }
+
+.sm-cd-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sm-text-ghost);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sm-cd-label i { font-size: 10px; }
+
+.sm-cd-loading {
+    font-size: 11px;
+    color: var(--sm-text-ghost);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+.sm-cd-blurb {
+    font-size: 13px;
+    color: var(--sm-text-3);
+    line-height: 1.6;
+}
+
+/* Summary — inset panel (Editorial B, with a background). Subtle accent tint:
+   7% accent fill + 15% accent border, mixed straight from --sm-accent-base so
+   it tracks the theme. Kept deliberately soft (was 14%/25%, too strong). Still
+   reads as a faint accent-tinted panel on both light and dark. */
+.sm-cd-summary {
+    font-size: 12.5px;
+    color: var(--sm-text-2);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    padding: 11px 13px;
+    background: color-mix(in srgb, var(--sm-accent-base) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sm-accent-base) 15%, transparent);
+    border-radius: 6px;
+}
+.sm-cd-summary.sm-cd-clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 9;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.sm-cd-summary-toggle {
+    margin-top: 7px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--sm-accent-line);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+}
+.sm-cd-summary-toggle:hover { text-decoration: underline; }
+
+/* Quotes — Editorial B. Serif voice font at a slightly larger size on a left
+   accent rule, no box. The typography carries it; the em-dash speaker sits
+   below in the accent color. Auto/summarizer quotes shift the rule colour. */
+.sm-cd-quotes {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.sm-cd-quote {
+    margin: 0;
+    padding: 1px 0 1px 13px;
+    border-left: 2px solid var(--sm-accent-line);
+}
+.sm-cd-quote.sm-quote-auto {
+    border-left-color: var(--sm-tag-char-bd);
+}
+.sm-cd-quote-text {
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    font-size: 14px;
+    color: var(--sm-text-2);
+    line-height: 1.5;
+    font-style: italic;
+    margin: 0;
+}
+.sm-cd-quote-speaker {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--sm-accent-text);
+    font-style: normal;
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+}
+.sm-cd-quote-speaker::before { content: '\2014\00a0'; }
+.sm-cd-quote-context {
+    font-size: 10px;
+    color: var(--sm-text-faint);
+    font-style: italic;
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
+/* Image grid — 3 per row. Tile = clickable unit (image box + caption below).
+   The image box keeps the border/hover; the caption sits beneath it. */
+.sm-cd-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.sm-cd-grid-tile {
+    cursor: pointer;
+}
+.sm-cd-grid-img {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--sm-border-soft);
+    transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+}
+.sm-cd-grid-tile:hover .sm-cd-grid-img {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--sm-scrim-thumb);
+    border-color: var(--sm-accent-border);
+}
+.sm-cd-grid-img img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+.sm-cd-grid-star {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sm-scrim, rgba(0, 0, 0, 0.55));
+    color: var(--sm-accent-text);
+    font-size: 10px;
+    border-radius: 2px;
+}
+/* Caption — muted, on the panel's own surface rather than a heavy dark strip,
+   so it sits quietly under each tile instead of shouting. */
+.sm-cd-grid-caption {
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--sm-text-faint);
+    padding: 4px 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* ─── Empty states ───────────────────────────────── */
 
@@ -884,27 +1223,6 @@
     border-bottom: none;
 }
 
-.sm-page-chat-expand {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: 1px solid transparent;
-    color: var(--sm-text-whisper);
-    cursor: pointer;
-    transition: color 0.15s, transform 0.2s, border-color 0.15s;
-    padding: 0;
-    font-size: 11px;
-    align-self: center;
-}
-.sm-page-chat-expand:hover {
-    color: var(--sm-text-dim);
-    border-color: var(--sm-border-soft);
-}
-
 /* Goto button — opens the chat in ST */
 .sm-page-chat-goto {
     flex-shrink: 0;
@@ -927,155 +1245,9 @@
     border-color: var(--sm-accent-bg);
 }
 
-/* Expandable rows get a pointer and a subtle hover cue */
-.sm-page-chat.sm-chat-expandable {
+/* Chat rows are clickable → open the chat detail popup. */
+.sm-page-chat.sm-chat-clickable {
     cursor: pointer;
-}
-/* Subtle dot indicator when chat has stored images/quotes */
-.sm-page-chat-expand.sm-has-details {
-    color: var(--sm-accent-faint);
-}
-.sm-page-chat-expand.sm-has-details:hover {
-    color: var(--sm-accent-text);
-}
-
-/* Rotated chevron when expanded */
-.sm-page-chat-expand.sm-expanded {
-    transform: rotate(180deg);
-    color: var(--sm-accent-line);
-}
-
-/* ─── Detail Panel (accordion body) ──────────────── */
-
-.sm-page-chat-details {
-    padding: 0 4px 14px 40px; /* indent past the order number column */
-    animation: sm-details-slide 0.2s ease;
-}
-.sm-page-chat-details[hidden] { display: none; }
-
-@keyframes sm-details-slide {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.sm-page-details-loading {
-    font-size: 11px;
-    color: var(--sm-text-ghost);
-    font-style: italic;
-    padding: 8px 0;
-}
-
-.sm-page-details-empty {
-    font-size: 11px;
-    color: var(--sm-text-ghost);
-    font-style: italic;
-    padding: 8px 0;
-}
-
-.sm-page-details-section {
-    margin-bottom: 14px;
-}
-.sm-page-details-section:last-child { margin-bottom: 0; }
-
-.sm-page-details-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--sm-text-ghost);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.sm-page-details-label i { font-size: 10px; }
-
-/* ─── Gallery Strip (horizontal scroll) ──────────── */
-
-.sm-page-details-gallery {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--sm-accent-wash) transparent;
-}
-.sm-page-details-gallery::-webkit-scrollbar { height: 4px; }
-.sm-page-details-gallery::-webkit-scrollbar-track { background: transparent; }
-.sm-page-details-gallery::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
-
-.sm-page-details-img {
-    flex-shrink: 0;
-    width: 120px;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.15s;
-    border: 1px solid var(--sm-border-soft);
-    overflow: hidden;
-}
-.sm-page-details-img:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--sm-scrim-thumb);
-    border-color: var(--sm-accent-border);
-}
-
-.sm-page-details-img img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    display: block;
-}
-
-.sm-page-details-img-caption {
-    font-size: 10px;
-    color: var(--sm-text-dim);
-    padding: 4px 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    background: var(--sm-inset);
-}
-
-/* ─── Quotes ─────────────────────────────────────── */
-
-.sm-page-details-quotes {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.sm-page-details-quote {
-    margin: 0;
-    padding: 10px 14px;
-    border-left: 2px solid var(--sm-accent-border);
-    background: var(--sm-fill-ghost);
-}
-
-/* Auto-pulled quotes get a slightly different accent */
-.sm-page-details-quote.sm-quote-auto {
-    border-left-color: var(--sm-tag-char-bd);
-}
-
-.sm-page-details-quote-text {
-    font-size: 12px;
-    color: var(--sm-text-3);
-    line-height: 1.6;
-    font-style: italic;
-}
-
-.sm-page-details-quote-speaker {
-    display: block;
-    font-size: 11px;
-    color: var(--sm-accent-line);
-    font-style: normal;
-    margin-top: 6px;
-}
-
-.sm-page-details-quote-context {
-    font-size: 10px;
-    color: var(--sm-text-ghost);
-    margin-top: 4px;
-    line-height: 1.45;
 }
 
 /* ─── Lightbox (image full-view overlay) ─────────── */
@@ -1122,29 +1294,6 @@
     text-align: center;
     max-width: 500px;
 }
-
-/* ─── Detail Panel Close Button ──────────────────── */
-
-.sm-page-details-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    width: 100%;
-    margin-top: 12px;
-    padding: 6px 0;
-    background: none;
-    border: none;
-    border-top: 1px solid var(--sm-border-faint);
-    color: var(--sm-text-ghost);
-    font-size: 11px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: color 0.15s;
-}
-.sm-page-details-close:hover { color: var(--sm-text-dim); }
-.sm-page-details-close i { font-size: 9px; }
-
 
 /* ─── Word counts (populated from cached counts, no live fetch) ───── */
 

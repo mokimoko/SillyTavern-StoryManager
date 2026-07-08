@@ -691,46 +691,11 @@
 }
 .sm-chrono-label { font-size: 12px; padding: 4px 7px; }
 
-/* Wrapper holding a chrono row + its (collapsed) per-chat image picker panel. */
+/* Wrapper holding a single all-text chrono row. */
 .sm-chrono-item {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-/* Per-chat image button (thumbnail or placeholder) sitting in the row. */
-.sm-chrono-img {
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
-    padding: 0;
-    overflow: hidden;
-    cursor: pointer;
-    background: var(--sm-scrim-thumb);
-    border: 1px solid var(--sm-border);
-    color: var(--sm-text-faint);
-    display: grid;
-    place-content: center;
-    transition: border-color 0.15s, color 0.15s;
-}
-.sm-chrono-img:hover {
-    border-color: var(--sm-accent-faint);
-    color: var(--sm-accent-text);
-}
-.sm-chrono-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.sm-chrono-img-empty { font-size: 13px; }
-
-/* Collapsible per-chat image picker, indented to sit under the row body. */
-.sm-chrono-picker {
-    padding: 8px 9px 9px 56px;
-    background: var(--sm-fill-ghost);
-    border: 1px solid var(--sm-border-faint);
-    border-top: none;
 }
 
 /* Per-chat blurb: inline text input + gen button sitting below the time label. */
@@ -1062,6 +1027,33 @@
 }
 .sm-cd-image-item:last-child { border-bottom: none; }
 
+/* Drag handle for reordering gallery images */
+.sm-cd-image-handle {
+    cursor: grab;
+    color: var(--sm-text-dim);
+    flex-shrink: 0;
+    padding: 0 2px;
+    opacity: 0.55;
+}
+.sm-cd-image-handle:hover { opacity: 1; }
+.sm-cd-image-item.sm-cd-image-dragging { opacity: 0.4; }
+.sm-cd-image-item.sm-cd-image-over {
+    border-top: 2px solid var(--sm-accent-line);
+}
+
+/* Cover star toggle */
+.sm-cd-star {
+    flex-shrink: 0;
+    color: var(--sm-text-dim);
+}
+.sm-cd-star:hover { color: var(--sm-accent-text); }
+.sm-cd-star.is-cover { color: var(--sm-accent-text); }
+
+/* Subtle highlight on the row that is the cover */
+.sm-cd-image-item.sm-cd-image-cover {
+    background: var(--sm-accent-wash);
+}
+
 .sm-cd-image-mini {
     width: 36px;
     height: 36px;
@@ -1096,14 +1088,20 @@
 }
 .sm-cd-quote-item:last-child { border-bottom: none; }
 
-.sm-cd-quote-text {
+/* Scoped to .sm-cd-quote-item: these style the EDITOR's textarea/input, which
+   deliberately reuse the .sm-cd-quote-text / .sm-cd-quote-speaker class names.
+   The DISPLAY popup (display.css) uses the SAME class names on <div>/<cite>
+   inside .sm-cd-quote (a blockquote), NOT .sm-cd-quote-item — so leaving these
+   unscoped leaked min-height:50px etc. onto the display quotes and padded the
+   short ones. Scoping under .sm-cd-quote-item keeps them out of the display. */
+.sm-cd-quote-item .sm-cd-quote-text {
     flex: 1;
     min-height: 50px;
     font-size: 12px;
     resize: vertical;
 }
 
-.sm-cd-quote-speaker {
+.sm-cd-quote-item .sm-cd-quote-speaker {
     width: 120px;
     flex-shrink: 0;
     font-size: 11px;

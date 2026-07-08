@@ -20,10 +20,11 @@ import {
     getWordCountMap, sumWordsForChats, sumWordsForBook,
 } from '../storage.js';
 import { openChatForCharacter, getSTTags } from '../stContext.js';
+import { getSummaryPresenceForChats } from '../summarizerBridge.js';
 import { renderBookShelf } from './bookShelf.js';
 import { renderStorylineGrid } from './storylineGrid.js';
 import { renderStorylinePage } from './storylinePage.js';
-import { coverBg, escapeHtml, escapeAttr, prettyChatName, logError } from './util.js';
+import { coverBg, escapeHtml, escapeAttr, prettyChatName, coverImage, logError } from './util.js';
 
 const BACKDROP_ID = 'sm-display-backdrop';
 const DISPLAY_ID = 'sm-display-frame';
@@ -310,9 +311,20 @@ async function showPage(storylineId, gridStorylines) {
     main.innerHTML = `<div class="sm-page" id="sm-display-page"></div>`;
     const pageHost = main.querySelector('#sm-display-page');
 
+    // Resolve summary-presence for every chat in one cached archive read, so
+    // the page can dot + gate the popup on summary/quotes/images synchronously.
+    let summaryPresence = {};
+    try {
+        const filenames = (storyline.chats || []).map(c => c.file_name).filter(Boolean);
+        summaryPresence = await getSummaryPresenceForChats(filenames);
+    } catch (e) {
+        logError('Failed to resolve summary presence:', e);
+    }
+
     renderStorylinePage(pageHost, {
         storyline,
         wordCounts,
+        summaryPresence,
         onBack: () => showGrid(),
         onOpenChat: async (chat) => {
             // Cross-character open: chat entries carry their owning avatar.
@@ -339,9 +351,10 @@ function wireChatHover(rowEl, chat) {
 
 function showDetail(chat) {
     if (!detailEl) return;
-    const hasImg = !!chat.image;
+    const cover = coverImage(chat);
+    const hasImg = !!cover;
     const imgHtml = hasImg
-        ? `<div class="sm-chat-detail-img">${coverBg(chat.imageThumb || chat.image, 'fa-comment')}</div>`
+        ? `<div class="sm-chat-detail-img">${coverBg(cover.thumb || cover.src, 'fa-comment')}</div>`
         : '';
     const blurb = chat.blurb?.trim();
     const blurbHtml = blurb

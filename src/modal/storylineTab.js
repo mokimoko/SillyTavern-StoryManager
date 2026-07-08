@@ -530,10 +530,6 @@ function renderChronoSection(container) {
             const chat = draft.chats.find(c => c.file_name === fileName);
             if (chat) chat.chronoLabel = label || null;
         },
-        (fileName, value) => {
-            const chat = draft.chats.find(c => c.file_name === fileName);
-            if (chat) { chat.image = value.url; chat.imageThumb = value.thumb; }
-        },
         {
             onBlurbChange: (fileName, blurb) => {
                 const chat = draft.chats.find(c => c.file_name === fileName);
@@ -628,6 +624,42 @@ function renderChatDetailsSection(container) {
 }
 
 /**
+ * Update ONLY the collapsed-row badge ("3 img, 2 quotes") for a single chat,
+ * in place. Used after edits inside an open row so the counts stay live WITHOUT
+ * rebuilding the whole section (which would collapse every open row and reset
+ * their populated flags — the cause of the "folds back up mid-edit" bug).
+ */
+function updateChatRowBadge(container, chat) {
+    const host = container.querySelector('#sm-sl-chat-details');
+    const row = host?.querySelector(`.sm-cd-row[data-file="${cssAttrEscape(chat.file_name)}"]`);
+    if (!row) return;
+
+    const header = row.querySelector('.sm-cd-header');
+    if (!header) return;
+
+    const imgCount = (chat.images || []).length;
+    const quoteCount = (chat.quotes || []).filter(q => q.source === 'manual').length;
+
+    let badge = header.querySelector('.sm-cd-badge');
+    if (!imgCount && !quoteCount) {
+        badge?.remove();
+        return;
+    }
+    const text = `${imgCount ? `${imgCount} img` : ''}${imgCount && quoteCount ? ', ' : ''}${quoteCount ? `${quoteCount} quote${quoteCount > 1 ? 's' : ''}` : ''}`;
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'sm-cd-badge';
+        header.appendChild(badge);
+    }
+    badge.textContent = text;
+}
+
+/** Escape a string for use inside a CSS attribute selector [x="..."]. */
+function cssAttrEscape(s) {
+    return String(s ?? '').replace(/["\\]/g, '\\$&');
+}
+
+/**
  * Render the editable body for a single chat's images + quotes.
  */
 function renderChatDetailBody(body, chat, container) {
@@ -677,7 +709,7 @@ function renderChatDetailBody(body, chat, container) {
             }
         }
         renderImagesList(body.querySelector('.sm-cd-images-list'), chat, container);
-        renderChatDetailsSection(container); // refresh badges
+        updateChatRowBadge(container, chat); // refresh badge in place
     });
 
     // Wire add-quote.
@@ -714,7 +746,7 @@ function renderChatDetailBody(body, chat, container) {
             }
             if (added) {
                 renderQuotesList(body.querySelector('.sm-cd-quotes-list'), chat, container);
-                renderChatDetailsSection(container);
+                updateChatRowBadge(container, chat);
             }
             alert(`Pulled ${added} new quote${added === 1 ? '' : 's'}. ${pulled.length - added} duplicate${pulled.length - added === 1 ? '' : 's'} skipped.`);
         } catch (e) {
@@ -728,7 +760,13 @@ function renderChatDetailBody(body, chat, container) {
 }
 
 /**
- * Render the list of gallery images for a chat (simple path list with remove).
+ * Render the list of gallery images for a chat.
+ *
+ * Each row is drag-reorderable (native HTML5 DnD, same pattern as chronology.js)
+ * and carries a cover "star" toggle. Starring sets isCover=true on that image and
+ * clears it on every other — one cover max. The star is independent of visual
+ * order: reordering never changes the cover, and starring never reorders. If no
+ * image is starred, coverImage() falls back to images[0] (see display/util.js).
  */
 function renderImagesList(host, chat, container) {
     if (!host) return;
@@ -739,8 +777,14 @@ function renderImagesList(host, chat, container) {
 
     host.innerHTML = chat.images.map((img, i) => {
         const name = img.src?.split('/').pop() || 'image';
+        const isCover = !!img.isCover;
         return `
-            <div class="sm-cd-image-item" data-idx="${i}">
+            <div class="sm-cd-image-item${isCover ? ' sm-cd-image-cover' : ''}" data-idx="${i}" draggable="true">
+                <i class="fa-solid fa-grip-vertical sm-cd-image-handle" title="Drag to reorder"></i>
+                <button class="sm-btn-icon sm-cd-star${isCover ? ' is-cover' : ''}"
+                        title="${isCover ? 'Cover image' : 'Set as cover'}">
+                    <i class="fa-${isCover ? 'solid' : 'regular'} fa-star"></i>
+                </button>
                 <img src="${escapeAttr(img.thumb || img.src)}" class="sm-cd-image-mini" alt="" />
                 <span class="sm-cd-image-name" title="${escapeAttr(img.src)}">${escapeHtml(name)}</span>
                 <input type="text" class="sm-input sm-cd-image-caption" placeholder="Caption (optional)"
@@ -749,16 +793,75 @@ function renderImagesList(host, chat, container) {
             </div>`;
     }).join('');
 
-    // Wire remove + caption.
+    // Wire remove + caption + cover star.
     host.querySelectorAll('.sm-cd-image-item').forEach(el => {
         const idx = parseInt(el.dataset.idx, 10);
         el.querySelector('.sm-cd-remove')?.addEventListener('click', () => {
             chat.images.splice(idx, 1);
             renderImagesList(host, chat, container);
-            renderChatDetailsSection(container);
+            updateChatRowBadge(container, chat);
         });
         el.querySelector('.sm-cd-image-caption')?.addEventListener('input', (e) => {
             chat.images[idx].caption = e.target.value;
+        });
+        el.querySelector('.sm-cd-star')?.addEventListener('click', () => {
+            // One cover max, and no toggle-off: clicking any star clears every
+            // other image's flag and sets this one. Clicking the already-active
+            // star is a harmless no-op re-affirm. There's always a deliberate
+            // cover once chosen; unstarred state only exists before the first pick.
+            chat.images.forEach(im => { delete im.isCover; });
+            chat.images[idx].isCover = true;
+            renderImagesList(host, chat, container);
+            // Cover choice doesn't change the badge counts and the modal row has
+            // no thumbnail, so no section-level refresh is needed here. (The
+            // Display reads the cover via coverImage() on its own next render.)
+        });
+    });
+
+    wireImageReorder(host, chat, container);
+}
+
+/**
+ * Native HTML5 drag-drop reordering for the gallery image list. Mirrors the
+ * chronology.js pattern: dragstart tags the source index, drop splices the
+ * source into the target position and re-renders. Reordering mutates
+ * chat.images[] order only — it never touches the isCover flag.
+ */
+function wireImageReorder(host, chat, container) {
+    let dragIdx = null;
+
+    host.querySelectorAll('.sm-cd-image-item').forEach(el => {
+        el.addEventListener('dragstart', (e) => {
+            dragIdx = parseInt(el.dataset.idx, 10);
+            el.classList.add('sm-cd-image-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        el.addEventListener('dragend', () => {
+            el.classList.remove('sm-cd-image-dragging');
+            host.querySelectorAll('.sm-cd-image-item').forEach(r =>
+                r.classList.remove('sm-cd-image-over'));
+        });
+
+        el.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            el.classList.add('sm-cd-image-over');
+        });
+
+        el.addEventListener('dragleave', () => {
+            el.classList.remove('sm-cd-image-over');
+        });
+
+        el.addEventListener('drop', (e) => {
+            e.preventDefault();
+            el.classList.remove('sm-cd-image-over');
+            const targetIdx = parseInt(el.dataset.idx, 10);
+            if (dragIdx == null || dragIdx === targetIdx) return;
+            chat.images.splice(targetIdx, 0, chat.images.splice(dragIdx, 1)[0]);
+            dragIdx = null;
+            renderImagesList(host, chat, container);
+            // Reorder changes neither counts nor cover, so no section refresh.
         });
     });
 }
@@ -791,7 +894,7 @@ function renderQuotesList(host, chat, container) {
         el.querySelector('.sm-cd-remove')?.addEventListener('click', () => {
             chat.quotes.splice(idx, 1);
             renderQuotesList(host, chat, container);
-            renderChatDetailsSection(container);
+            updateChatRowBadge(container, chat);
         });
         el.querySelector('.sm-cd-quote-text')?.addEventListener('input', (e) => {
             chat.quotes[idx].text = e.target.value;

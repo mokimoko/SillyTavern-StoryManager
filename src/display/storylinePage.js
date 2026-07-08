@@ -6,12 +6,10 @@
  * are click-to-open and expose a hover detail panel; the panel itself (shared,
  * cursor-tracked) is owned by display/index.js, which passes in `wireChatHover`.
  *
- * Each chat row has a "See more" expander chevron on the right. Clicking it
- * opens an accordion panel below the row showing:
- *   - Gallery images assigned to the chat (horizontal scroll strip)
- *   - Quotes — auto-pulled from SimpleSummarizer comprehensive summaries
- *     (if installed) merged with any manually-stored quotes
- * The expander is lazy: detail content is fetched/rendered on first open only.
+ * Clicking a chat row opens the chat detail popup (display/chatDetailModal.js)
+ * — a centered dialog showing the chat's blurb, comprehensive summary, merged
+ * quotes, and a 3-per-row image grid. (This replaced an older inline accordion.)
+ * The little goto button on each row still opens the chat in SillyTavern.
  *
  * When a Dynamic Audio Redux playlist is linked (storyline.darPlaylist), the
  * chat section becomes a two-column layout: chats on the left, playlist cover
@@ -25,9 +23,9 @@
  *   - onOpenChat(chatEntry): open a chat in ST
  *   - wireChatHover(rowEl, chatEntry): attach the shared detail-panel listeners
  */
-import { coverBg, escapeHtml, escapeAttr, prettyChatName, logWarn } from './util.js';
+import { coverBg, escapeHtml, escapeAttr, prettyChatName, coverImage, migrateChatCover, logWarn } from './util.js';
 import { extension_settings } from '../../../../../extensions.js';
-import { getQuotesForChat } from '../summarizerBridge.js';
+import { openChatDetail } from './chatDetailModal.js';
 import { normalizeChatKey, sumWordsForChats } from '../storage.js';
 
 // ============================================================
@@ -96,6 +94,21 @@ function pauseDarPlayback() {
 // Tags helper
 // ============================================================
 
+/**
+ * Does this chat have "detail" content worth a dot + click popup?
+ * Blurb deliberately does NOT count — it's already shown in the row and in the
+ * hover preview. Only stored images, manual quotes, or a SimpleSummarizer entry
+ * (summary text and/or summary quotes) earn the dot.
+ * @param {object} chat - the chat entry
+ * @param {{hasText:boolean,hasQuotes:boolean}|undefined} presence - summary presence for this chat
+ */
+function chatHasDetails(chat, presence) {
+    if (chat.images?.length) return true;
+    if (chat.quotes?.some(q => q?.source === 'manual' && q.text?.trim())) return true;
+    if (presence?.hasText || presence?.hasQuotes) return true;
+    return false;
+}
+
 function allTagsHtml(tags = {}) {
     const pills = [];
     (tags.character || []).forEach(t => pills.push(`<span class="sm-dtag sm-dtag-character">${escapeHtml(t)}</span>`));
@@ -109,7 +122,7 @@ function allTagsHtml(tags = {}) {
 // Render
 // ============================================================
 
-export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireChatHover, wordCounts = {} }) {
+export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireChatHover, wordCounts = {}, summaryPresence = {} }) {
     const sl = storyline;
     const heroUrl = sl.heroImage || sl.coverImage || null;
 
@@ -137,8 +150,12 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
 
     const chatsHtml = chats.length
         ? chats.map((c, i) => {
-            const thumb = c.image
-                ? `<div class="sm-page-chat-thumb">${coverBg(c.imageThumb || c.image, 'fa-comment')}</div>`
+            // Idempotent seed of images[] from the legacy single image, then
+            // read the representative cover from the array (single source of truth).
+            migrateChatCover(c);
+            const cover = coverImage(c);
+            const thumb = cover
+                ? `<div class="sm-page-chat-thumb">${coverBg(cover.thumb || cover.src, 'fa-comment')}</div>`
                 : `<div class="sm-page-chat-thumb"><div class="sm-page-chat-thumb-empty"><i class="fa-solid fa-comment"></i></div></div>`;
             const order = typeof c.chronoOrder === 'number' ? c.chronoOrder + 1 : i + 1;
             const blurb = c.blurb?.trim();
@@ -157,25 +174,26 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
             const chrono = (chronoLine || wcLine)
                 ? `<div class="sm-page-chat-meta">${chronoLine}${wcLine}</div>`
                 : '';
-            const hasStored = (c.images?.length > 0) || (c.quotes?.length > 0);
+            // Dot + click popup only when the chat actually has details
+            // (summary / quotes / images). Blurb alone does not qualify.
+            const hasDetails = chatHasDetails(c, summaryPresence[c.file_name]);
+            const dotHtml = hasDetails
+                ? `<span class="sm-chat-has-details" title="Has summary, quotes, or images"></span>`
+                : '';
             return `
-                <div class="sm-page-chat-wrapper" data-chat-idx="${i}">
-                    <div class="sm-page-chat ${hasStored ? 'sm-chat-expandable' : ''}">
+                <div class="sm-page-chat-wrapper" data-chat-idx="${i}" data-has-details="${hasDetails ? '1' : '0'}">
+                    <div class="sm-page-chat${hasDetails ? ' sm-chat-clickable' : ''}">
                         <div class="sm-page-chat-order">${order}</div>
                         ${thumb}
                         <div class="sm-page-chat-body">
-                            <div class="sm-page-chat-name">${escapeHtml(prettyChatName(c.file_name))}</div>
+                            <div class="sm-page-chat-name"><span class="sm-page-chat-name-text">${escapeHtml(prettyChatName(c.file_name))}</span>${dotHtml}</div>
                             ${blurbHtml}
                         </div>
                         ${chrono}
                         <button class="sm-page-chat-goto" title="Open in SillyTavern">
                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         </button>
-                        ${hasStored ? `<button class="sm-page-chat-expand sm-has-details" title="See more">
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </button>` : ''}
                     </div>
-                    <div class="sm-page-chat-details" hidden></div>
                 </div>`;
         }).join('')
         : `<div class="sm-muted" style="padding:8px 0">No chats assigned to this storyline yet.</div>`;
@@ -239,7 +257,7 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
 
     host.querySelector('.sm-page-back')?.addEventListener('click', () => onBack?.());
 
-    // Wire each chat row: row click expands (if expandable), goto button opens chat.
+    // Wire each chat row: row click opens the detail popup, goto opens the chat in ST.
     host.querySelectorAll('.sm-page-chat-wrapper[data-chat-idx]').forEach(wrapper => {
         const idx = parseInt(wrapper.dataset.chatIdx, 10);
         const chat = chats[idx];
@@ -247,24 +265,25 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
 
         const row = wrapper.querySelector('.sm-page-chat');
         const gotoBtn = wrapper.querySelector('.sm-page-chat-goto');
-        const expandBtn = wrapper.querySelector('.sm-page-chat-expand');
-        const detailPanel = wrapper.querySelector('.sm-page-chat-details');
 
-        // Goto button → open chat in ST.
+        // Goto button → open chat in ST. (Always available, even on rows
+        // with no detail content.)
         gotoBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
             onOpenChat?.(chat);
         });
 
-        // Row click → expand accordion (only if this chat has an expand button).
-        if (expandBtn && detailPanel) {
+        // Row click → open the chat detail popup, but ONLY for rows that have
+        // details (summary / quotes / images). Rows without stay non-clickable
+        // — the goto button and hover preview still work.
+        if (wrapper.dataset.hasDetails === '1') {
             row?.addEventListener('click', (e) => {
                 if (e.target.closest('.sm-page-chat-goto')) return;
-                expandBtn.click();
+                openChatDetail(chat, { onOpenChat });
             });
-            wireChatExpand(expandBtn, detailPanel, chat);
         }
 
+        // Hover preview is universal — every row gets the cursor-tracked card.
         wireChatHover?.(row, chat);
     });
 
@@ -272,178 +291,6 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
     if (linked) {
         wirePlaylistButton(linked.name);
     }
-}
-
-// ============================================================
-// Chat "See more" expander
-// ============================================================
-
-/**
- * Wire the expand/collapse toggle for a chat row's detail panel.
- * Detail content is fetched + rendered lazily on the FIRST open.
- */
-function wireChatExpand(btn, panel, chat) {
-    let loaded = false;
-
-    btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-
-        const isOpen = !panel.hidden;
-
-        if (isOpen) {
-            // Collapse.
-            panel.hidden = true;
-            btn.classList.remove('sm-expanded');
-            return;
-        }
-
-        // First open → populate.
-        if (!loaded) {
-            panel.innerHTML = `<div class="sm-page-details-loading">Loading…</div>`;
-            panel.hidden = false;
-            btn.classList.add('sm-expanded');
-
-            await populateChatDetails(panel, chat);
-            loaded = true;
-            return;
-        }
-
-        // Subsequent opens — just reveal.
-        panel.hidden = false;
-        btn.classList.add('sm-expanded');
-    });
-}
-
-/**
- * Merge stored quotes with auto-pulled SimpleSummarizer quotes.
- * Deduplicates by text content — manual quotes take precedence.
- */
-async function mergeQuotes(chat) {
-    const manual = (chat.quotes || []).filter(q => q.source === 'manual');
-    let summarizerQuotes = [];
-
-    try {
-        summarizerQuotes = await getQuotesForChat(chat.file_name);
-    } catch (e) {
-        logWarn('Failed to fetch summarizer quotes:', e);
-    }
-
-    // Deduplicate: if a manual quote has the same text as a summarizer one, keep manual.
-    const manualTexts = new Set(manual.map(q => q.text.trim().toLowerCase()));
-    const deduped = summarizerQuotes.filter(q => !manualTexts.has(q.text.trim().toLowerCase()));
-
-    return [...manual, ...deduped];
-}
-
-/**
- * Render the detail panel content: image gallery + quotes.
- */
-async function populateChatDetails(panel, chat) {
-    const images = chat.images || [];
-    const quotes = await mergeQuotes(chat);
-
-    if (!images.length && !quotes.length) {
-        panel.innerHTML = `
-            <div class="sm-page-details-empty">
-                <span>No images or quotes for this chapter yet.</span>
-            </div>`;
-        return;
-    }
-
-    let html = '';
-
-    // Image gallery strip.
-    if (images.length) {
-        html += `
-            <div class="sm-page-details-section">
-                <div class="sm-page-details-label">
-                    <i class="fa-solid fa-images"></i> Gallery · ${images.length} image${images.length === 1 ? '' : 's'}
-                </div>
-                <div class="sm-page-details-gallery">
-                    ${images.map((img, i) => `
-                        <div class="sm-page-details-img" data-img-idx="${i}">
-                            <img src="${escapeAttr(img.thumb || img.src)}"
-                                 alt="${escapeAttr(img.caption || '')}"
-                                 loading="lazy" />
-                            ${img.caption ? `<div class="sm-page-details-img-caption">${escapeHtml(img.caption)}</div>` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
-    }
-
-    // Quotes.
-    if (quotes.length) {
-        html += `
-            <div class="sm-page-details-section">
-                <div class="sm-page-details-label">
-                    <i class="fa-solid fa-quote-left"></i> Quotes · ${quotes.length}
-                </div>
-                <div class="sm-page-details-quotes">
-                    ${quotes.map(q => `
-                        <blockquote class="sm-page-details-quote ${q.source === 'summarizer' ? 'sm-quote-auto' : 'sm-quote-manual'}">
-                            <div class="sm-page-details-quote-text">${escapeHtml(q.text)}</div>
-                            ${q.speaker ? `<cite class="sm-page-details-quote-speaker">— ${escapeHtml(q.speaker)}</cite>` : ''}
-                            ${q.context ? `<div class="sm-page-details-quote-context">${escapeHtml(q.context)}</div>` : ''}
-                        </blockquote>
-                    `).join('')}
-                </div>
-            </div>`;
-    }
-
-    html += `<button class="sm-page-details-close">
-        <i class="fa-solid fa-chevron-up"></i> Close
-    </button>`;
-
-    panel.innerHTML = html;
-
-    // Wire close button.
-    panel.querySelector('.sm-page-details-close')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        panel.hidden = true;
-        // Sync the chevron button back to collapsed state.
-        const wrapper = panel.closest('.sm-page-chat-wrapper');
-        wrapper?.querySelector('.sm-page-chat-expand')?.classList.remove('sm-expanded');
-    });
-
-    // Wire image clicks → lightbox (open full-size in overlay).
-    panel.querySelectorAll('.sm-page-details-img[data-img-idx]').forEach(el => {
-        const idx = parseInt(el.dataset.imgIdx, 10);
-        const img = images[idx];
-        if (!img) return;
-        el.addEventListener('click', () => openLightbox(img.src, img.caption));
-    });
-}
-
-/**
- * Simple lightbox — full-screen overlay showing a single image.
- * Click anywhere (or press Escape) to close.
- */
-function openLightbox(src, caption) {
-    const overlay = document.createElement('div');
-    overlay.className = 'sm-lightbox';
-    overlay.innerHTML = `
-        <div class="sm-lightbox-backdrop"></div>
-        <div class="sm-lightbox-content">
-            <img src="${escapeAttr(src)}" alt="" />
-            ${caption ? `<div class="sm-lightbox-caption">${escapeHtml(caption)}</div>` : ''}
-        </div>
-    `;
-
-    const close = () => {
-        overlay.classList.remove('sm-lightbox-visible');
-        setTimeout(() => overlay.remove(), 200);
-        document.removeEventListener('keydown', escHandler);
-    };
-
-    const escHandler = (e) => { if (e.key === 'Escape') close(); };
-
-    overlay.addEventListener('click', close);
-    document.addEventListener('keydown', escHandler);
-
-    document.body.appendChild(overlay);
-    // Force reflow, then animate in.
-    requestAnimationFrame(() => overlay.classList.add('sm-lightbox-visible'));
 }
 
 // ============================================================

@@ -94,6 +94,19 @@ export function renderStorylineGrid(host, { headerTitle, headerMeta, storylines 
 
         cardsHost.querySelectorAll('.sm-grid-card').forEach(card => {
             card.addEventListener('click', () => onOpenStoryline?.(card.dataset.slId));
+
+            // Tooltip direction: point UP by default, but flip DOWN for cards in
+            // the top row (so the tooltip doesn't clip above the grid). Decided on
+            // hover because the column count — and thus which cards are "top row"
+            // — changes with window width under the responsive auto-fill grid.
+            card.addEventListener('mouseenter', () => {
+                const cards = [...cardsHost.querySelectorAll('.sm-grid-card')];
+                if (!cards.length) return;
+                const minTop = Math.min(...cards.map(c => c.offsetTop));
+                // A small tolerance absorbs sub-pixel/rounding differences.
+                const isTopRow = card.offsetTop <= minTop + 2;
+                card.classList.toggle('sm-tooltip-below', isTopRow);
+            });
         });
     };
 
