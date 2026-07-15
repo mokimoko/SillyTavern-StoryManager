@@ -59,7 +59,7 @@ Use SillyTavern's built-in extension installer:
 1. Open **Extensions** → **Install Extension**
 2. Paste this URL:
    ```
-   https://github.com/nrahis/SillyTavern-StoryManager
+   https://github.com/mokimoko/SillyTavern-StoryManager
    ```
 3. Click **Install** and reload if prompted
 
