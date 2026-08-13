@@ -162,6 +162,16 @@ async function renderListView(container, ctx) {
 function wireCardActions(container, ctx) {
     container.querySelectorAll('.sm-card[data-id]').forEach(card => {
         const id = card.dataset.id;
+        card.querySelector('.sm-card-ebook')?.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            try {
+                const editor = await import('../ebook/editor/index.js');
+                const opened = await editor.openEbookEditor(id, { returnTarget: { type: 'management' } });
+                if (opened) ctx.close?.();
+            } catch (error) {
+                logError('Failed to open ebook editor:', error);
+            }
+        });
         card.querySelector('.sm-card-edit')?.addEventListener('click', () => {
             editingId = id;
             draft = null;
@@ -170,7 +180,8 @@ function wireCardActions(container, ctx) {
         card.querySelector('.sm-card-delete')?.addEventListener('click', async (e) => {
             e.stopPropagation();
             const sl = await getStoryline(id);
-            if (confirm(`Delete storyline "${sl?.title || id}"? Chats become unowned; this can't be undone.`)) {
+            const ebookWarning = sl?.ebook?.file ? ' Its ebook will also be permanently deleted.' : '';
+            if (confirm(`Delete storyline "${sl?.title || id}"? Chats become unowned.${ebookWarning} This can't be undone.`)) {
                 await deleteStoryline(id);
                 render(container, ctx);
             }
@@ -194,6 +205,9 @@ function slCardHtml(sl) {
                 </div>
             </div>
             <div class="sm-card-actions">
+                <button class="sm-btn-icon sm-card-ebook" title="${sl.ebook?.file ? 'Edit ebook' : 'Create ebook'}" aria-label="${sl.ebook?.file ? 'Edit ebook' : 'Create ebook'}">
+                    <i class="fa-solid ${sl.ebook?.file ? 'fa-book-open-reader' : 'fa-book-medical'}"></i>
+                </button>
                 <button class="sm-btn-icon sm-card-edit" title="Edit"><i class="fa-solid fa-pen"></i></button>
                 <button class="sm-btn-icon sm-card-delete sm-btn-danger-text" title="Delete"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -1188,7 +1202,9 @@ async function saveDraft(container, ctx) {
 
 async function deleteDraft(container, ctx) {
     if (!draft?.id) return;
-    if (!confirm(`Delete storyline "${draft.title}"? Chats become unowned; this can't be undone.`)) return;
+    const liveStoryline = await getStoryline(draft.id);
+    const ebookWarning = liveStoryline?.ebook?.file ? ' Its ebook will also be permanently deleted.' : '';
+    if (!confirm(`Delete storyline "${draft.title}"? Chats become unowned.${ebookWarning} This can't be undone.`)) return;
     await deleteStoryline(draft.id);
     exitEdit();
     render(container, ctx);

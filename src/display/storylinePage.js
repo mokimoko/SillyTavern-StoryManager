@@ -122,7 +122,7 @@ function allTagsHtml(tags = {}) {
 // Render
 // ============================================================
 
-export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireChatHover, wordCounts = {}, summaryPresence = {} }) {
+export function renderStorylinePage(host, { storyline, onBack, onOpenChat, onReadEbook, onDownloadEbook, wireChatHover, wordCounts = {}, summaryPresence = {} }) {
     const sl = storyline;
     const heroUrl = sl.heroImage || sl.coverImage || null;
 
@@ -239,6 +239,17 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
             <div class="sm-page-meta">
                 <div class="sm-page-cover">
                     ${coverBg(coverUrl, 'fa-book-open')}
+                    ${onReadEbook || onDownloadEbook ? `
+                        <div class="sm-page-ebook-actions">
+                            ${onReadEbook ? `
+                                <button type="button" class="sm-page-read-ebook" title="Read ebook" aria-label="Read ${escapeAttr(sl.title)} ebook">
+                                    <i class="fa-solid fa-book-open-reader"></i>
+                                </button>` : ''}
+                            ${onDownloadEbook ? `
+                                <button type="button" class="sm-page-download-ebook" title="Download EPUB" aria-label="Download ${escapeAttr(sl.title)} as EPUB">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>` : ''}
+                        </div>` : ''}
                 </div>
                 <div class="sm-page-info">
                     <div class="sm-page-title-row">
@@ -256,6 +267,19 @@ export function renderStorylinePage(host, { storyline, onBack, onOpenChat, wireC
     `;
 
     host.querySelector('.sm-page-back')?.addEventListener('click', () => onBack?.());
+    host.querySelector('.sm-page-read-ebook')?.addEventListener('click', () => onReadEbook?.());
+    host.querySelector('.sm-page-download-ebook')?.addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const icon = button.querySelector('i');
+        button.disabled = true;
+        if (icon) icon.className = 'fa-solid fa-circle-notch fa-spin';
+        try {
+            await onDownloadEbook?.();
+        } finally {
+            button.disabled = false;
+            if (icon) icon.className = 'fa-solid fa-download';
+        }
+    });
 
     // Wire each chat row: row click opens the detail popup, goto opens the chat in ST.
     host.querySelectorAll('.sm-page-chat-wrapper[data-chat-idx]').forEach(wrapper => {

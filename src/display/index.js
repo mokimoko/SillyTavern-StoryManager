@@ -47,7 +47,7 @@ let wordCounts = {};           // file_name → cached word count (no live fetch
 // Open / Close
 // ============================================================
 
-export async function openDisplay() {
+export async function openDisplay(options = {}) {
     ensureDOM();
     isOpen = true;
 
@@ -57,8 +57,20 @@ export async function openDisplay() {
     });
 
     await refreshData();
+    if (Object.prototype.hasOwnProperty.call(options || {}, 'bookId')) {
+        const requestedBookId = options.bookId || null;
+        activeBookId = requestedBookId && booksOrdered.some(book => book.id === requestedBookId)
+            ? requestedBookId
+            : null;
+    } else if (activeBookId && !booksOrdered.some(book => book.id === activeBookId)) {
+        activeBookId = null;
+    }
     renderShelf();
-    showGrid();
+    if (options?.storylineId) {
+        await showPage(options.storylineId, await storylinesForActiveBook());
+    } else {
+        showGrid();
+    }
 }
 
 export function closeDisplay() {
@@ -335,6 +347,38 @@ async function showPage(storylineId, gridStorylines) {
                 logError('Failed to open chat:', e);
             }
         },
+        onReadEbook: storyline.ebook?.file ? async () => {
+            const returnBookId = activeBookId;
+            try {
+                const reader = await import('../ebook/reader/index.js');
+                const opened = await reader.openEbookReader(storyline.id, {
+                    returnTarget: { type: 'display', bookId: returnBookId },
+                });
+                if (opened) closeDisplay();
+            } catch (error) {
+                logError('Failed to open ebook reader:', error);
+            }
+        } : null,
+        onDownloadEbook: storyline.ebook?.file ? async () => {
+            try {
+                const [{ downloadEpub }, { notify }] = await Promise.all([
+                    import('../ebook/export/epub.js'),
+                    import('../ebook/ui.js'),
+                ]);
+                const { report } = await downloadEpub(storyline.id);
+                if (report.skippedImages) {
+                    notify(`EPUB downloaded, but ${report.skippedImages} image${report.skippedImages === 1 ? '' : 's'} could not be embedded.`, 'warning');
+                } else if (!report.embeddedFont) {
+                    notify('EPUB downloaded. The Google font was unavailable, so reader serif fonts will be used.', 'warning');
+                } else {
+                    notify('EPUB download started.', 'success');
+                }
+            } catch (error) {
+                logError('Failed to download ebook:', error);
+                const { notify } = await import('../ebook/ui.js');
+                notify(error.message || 'The EPUB could not be created.', 'error');
+            }
+        } : null,
         wireChatHover: wireChatHover,
     });
 }

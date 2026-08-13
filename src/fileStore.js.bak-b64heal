@@ -42,32 +42,6 @@ function encodeBase64(data) {
     return btoa(binary);
 }
 
-function decodeBase64(b64) {
-    const binary = atob(b64.trim());
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-}
-
-// Parse the store file. It should be plain JSON, but a bad save path can leave
-// it base64-encoded on disk (e.g. a media/verbatim writer that skipped the
-// server's base64 decode). A raw JSON.parse on that throws — which would make
-// getStore() fall back to an EMPTY store and then save that empty store over
-// your data (the "my books vanished" wipe). So we self-heal: on parse failure,
-// try decoding base64 and parsing again. The next save rewrites the file as
-// plain JSON, so this recovers cleanly. If it's neither, the real error surfaces.
-function parseStoreText(text) {
-    try {
-        return JSON.parse(text);
-    } catch (parseErr) {
-        try {
-            return JSON.parse(decodeBase64(text));
-        } catch {
-            throw parseErr;
-        }
-    }
-}
-
 async function uploadJSON(data) {
     const base64 = encodeBase64(data);
 
@@ -98,7 +72,7 @@ async function downloadJSON() {
     }
 
     const text = await response.text();
-    return parseStoreText(text);
+    return JSON.parse(text);
 }
 
 // ============================================================

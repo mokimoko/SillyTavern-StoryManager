@@ -22,7 +22,12 @@
 .sm-sb-panel,
 .sm-display-backdrop,
 .sm-display,
-.sm-lightbox {
+.sm-lightbox,
+.sm-eb-editor,
+.sm-eb-dialog-overlay,
+.sm-eb-popover,
+.sm-eb-context-menu,
+.sm-eb-notice {
     /* ── Surfaces ──────────────────────────────────────────────
        Modal/panel/display bodies: frosted theme tint over a dark base.
        Falls back to the original near-black if the tint token is absent. */

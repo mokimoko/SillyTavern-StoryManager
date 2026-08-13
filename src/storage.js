@@ -61,6 +61,7 @@ export function makeStoryline(partial = {}) {
         chats: Array.isArray(partial.chats) ? partial.chats : [],
         bookId: partial.bookId || null,
         darPlaylist: partial.darPlaylist || null,
+        ebook: partial.ebook || null,
         lastModified: new Date().toISOString(),
         created: partial.created || now,
     };
@@ -168,6 +169,19 @@ export async function deleteStoryline(storylineId) {
     const store = await getStore();
     const sl = store.storylines[storylineId];
     if (!sl) return false;
+    // Ebook contents live in a per-storyline user file. Remove it before the
+    // owning storyline disappears so no inaccessible orphan manuscript remains.
+    try {
+        if (sl.ebook?.file) {
+            const ebookStore = await import('./ebook/store.js');
+            await ebookStore.deleteEbookFile(storylineId);
+        }
+        const draftStore = await import('./ebook/draftStore.js');
+        await draftStore.deleteRecoveryDraft(storylineId);
+    } catch (error) {
+        console.error('[StoryManager] Failed to delete storyline ebook:', error);
+        return false;
+    }
     // Remove from any owning book's ordered list.
     if (sl.bookId && store.books[sl.bookId]) {
         const book = store.books[sl.bookId];

@@ -36,6 +36,18 @@ Both books and storylines carry a **title**, a **description**, **cover art**, a
 
 **Timespans** — Books can carry a timespan (auto-derived from their chats, or a custom label) for when you want a sense of chronology across a series.
 
+## Ebook Studio
+
+Each storyline can have one optional ebook edition built from the roleplay you already wrote. Use the book button beside a storyline in Management to open the full-screen studio.
+
+- Import any assigned chats into **Raws** in storyline order. System messages are excluded by default and can be included explicitly from the import menu.
+- Keep or remove speaker names, and remove selected XML wrappers or whole XML blocks.
+- Edit in Markdown, insert storyline images, and move selected text into named, reorderable chapters.
+- Choose a light or dark reader with its own remembered accent palette, chapter-heading and drop-cap designs, page numbering, a title page with optional author and custom edition line, and an optional epigraph.
+- Save explicitly to a separate per-storyline JSON file. Unsaved work also receives a local recovery draft in case the editor is interrupted.
+
+Once an ebook is saved, read and download buttons appear on the storyline cover in Display. The reader supports Auto, one-page, and two-page layouts and remembers your choice. It also includes a chapter jump menu, arrow key and Space navigation, and a Cover shortcut. EPUB downloads are reflowable and include the cover, manuscript images, typography, and accent styling.
+
 ## Settings
 
 In the Extensions drawer under Story Manager.

@@ -28,6 +28,7 @@ import { openSidebar, closeSidebar } from './src/sidebar/index.js';
 import { log, logWarn } from './src/display/util.js';
 
 const EXTENSION_DIR = 'SillyTavern-StoryManager';
+const EXTENSION_VERSION = '0.1.3';
 let initialized = false;
 
 // ============================================================
@@ -35,15 +36,14 @@ let initialized = false;
 // ============================================================
 
 function loadStylesheets() {
-    const sheets = ['sidebar.css', 'modal.css', 'display.css'];
-    // Cache-bust with a per-load timestamp. Without a changing query string the
-    // browser reuses the cached copy at the identical URL, so CSS edits wouldn't
-    // show on a normal refresh. Date.now() forces a fresh fetch each load.
-    const bust = Date.now();
+    const sheets = ['sidebar.css', 'modal.css', 'display.css', 'ebook.css'];
     for (const sheet of sheets) {
+        const id = `story-manager-style-${sheet.replace(/\.css$/i, '')}`;
+        if (document.getElementById(id)) continue;
         const link = document.createElement('link');
+        link.id = id;
         link.rel = 'stylesheet';
-        link.href = `/scripts/extensions/third-party/${EXTENSION_DIR}/${sheet}?v=${bust}`;
+        link.href = `/scripts/extensions/third-party/${EXTENSION_DIR}/${sheet}?v=${EXTENSION_VERSION}`;
         document.head.appendChild(link);
     }
 }
