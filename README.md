@@ -64,6 +64,12 @@ All optional, all feature-detected. Story Manager runs fine without any of them.
 - **SimpleSummarizer** — Pulls in your chat summaries where they're useful.
 - **UIBedazzler** — If you have the side-button strip active, Story Manager adds itself there and hides its wand entries automatically, so you don't get duplicate buttons.
 
+*Story Manager Display View*
+![Story Manager Display View](https://files.catbox.moe/8uirlm.png)
+
+*Example of an Ebook*
+![Example of an Ebook](https://files.catbox.moe/4hn0gy.png)
+
 ## Installation
 
 Use SillyTavern's built-in extension installer:
