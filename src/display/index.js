@@ -19,7 +19,7 @@ import {
     getBooks, getStorylines, getStorylinesInBook,
     getWordCountMap, sumWordsForChats, sumWordsForBook,
 } from '../storage.js';
-import { openChatForCharacter, getSTTags } from '../stContext.js';
+import { openChatEntry, getSTTags } from '../stContext.js';
 import { getSummaryPresenceForChats } from '../summarizerBridge.js';
 import { renderBookShelf } from './bookShelf.js';
 import { renderStorylineGrid } from './storylineGrid.js';
@@ -339,9 +339,14 @@ async function showPage(storylineId, gridStorylines) {
         summaryPresence,
         onBack: () => showGrid(),
         onOpenChat: async (chat) => {
-            // Cross-character open: chat entries carry their owning avatar.
+            // Source-aware open: chat entries carry their own source + owner
+            // (character avatar or group id). Fall back to the storyline's
+            // primary avatar for legacy character entries missing an avatar.
             try {
-                await openChatForCharacter(chat.avatar || storyline.character?.avatar, chat.file_name);
+                const entry = (chat.source === 'group')
+                    ? chat
+                    : { ...chat, avatar: chat.avatar || storyline.character?.avatar };
+                await openChatEntry(entry);
                 closeDisplay();
             } catch (e) {
                 logError('Failed to open chat:', e);

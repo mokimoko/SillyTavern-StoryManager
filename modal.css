@@ -571,6 +571,48 @@
 .sm-tag-add { display: flex; }
 .sm-tag-input { font-size: 12px; padding: 5px 8px; }
 
+/* ─── Additional cast chips + chat source grouping ── */
+.sm-cast-remove,
+.sm-persona-remove {
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.sm-cast-remove:hover,
+.sm-persona-remove:hover { opacity: 1; }
+
+/* Subheading that labels which cast member a block of chats belongs to
+   (only shown when a storyline has more than one character). */
+.sm-chat-cast-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sm-text-3);
+}
+.sm-chat-cast-header:first-child { margin-top: 0; }
+.sm-chat-cast-header i { opacity: 0.6; }
+
+/* Read-only banner shown when a storyline is anchored to a group. */
+.sm-primary-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sm-text);
+    background: var(--sm-tag-free-bg);
+    border: 1px solid var(--sm-tag-free-bd);
+}
+.sm-primary-group i { opacity: 0.7; }
+.sm-cast-type-icon { font-size: 10px; opacity: 0.7; }
+
 /* ─── Persona multi-select chips ──────────────────── */
 
 .sm-persona-multi {

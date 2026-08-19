@@ -65,6 +65,147 @@ export function getAllCharacters() {
 }
 
 // ============================================================
+// Groups
+// ============================================================
+//
+// ST group objects live on context.groups. Confirmed-enough shape (defensive —
+// every field is guarded because it varies across ST versions):
+//   { id, name, members:[avatarPng...], avatar_url, chat_id (active),
+//     chats:[chatId...], past_metadata:{ [chatId]:{...} } }
+// Group chat files are stored server-side by chat id (no character folder), so
+// their enumeration + open paths differ from single-character chats.
+
+/** Resolve a group object by id from context.groups (null if absent). */
+function findGroup(groupId) {
+    if (!groupId) return null;
+    const context = getContext();
+    return (context.groups || []).find(g => String(g.id) === String(groupId)) || null;
+}
+
+/** Build a stable identity for a group. */
+export function buildGroupIdentity(group) {
+    if (!group) return null;
+    return {
+        type: 'group',
+        groupId: String(group.id),
+        name: group.name || 'Group',
+        members: Array.isArray(group.members) ? [...group.members] : [],
+        avatar: group.avatar_url || '',
+    };
+}
+
+/** The currently active group as an identity, or null when not in a group chat. */
+export function getCurrentGroup() {
+    const context = getContext();
+    if (!context.groupId) return null;
+    const group = findGroup(context.groupId);
+    if (!group) return null;
+    const id = buildGroupIdentity(group);
+    return { ...id, activeChatId: group.chat_id || context.chatId || null };
+}
+
+/** All groups as identity objects (for the storyline editor's cast picker). */
+export function getAllGroups() {
+    const context = getContext();
+    return (context.groups || [])
+        .filter(g => g && g.id)
+        .map(buildGroupIdentity);
+}
+
+/**
+ * List a group's chat files, normalized to the SAME shape getChatsForCharacter
+ * returns in simple mode ([{ file_name }]) so the editor treats both uniformly.
+ * The list comes straight off the group object's `chats` array; per-chat
+ * metadata (message counts, dates) lives in `past_metadata` when present.
+ * @param {string} groupId
+ * @returns {Promise<Array<{file_name:string}>>}
+ */
+export async function getChatsForGroup(groupId) {
+    const group = findGroup(groupId);
+    if (!group) return [];
+    const ids = Array.isArray(group.chats) ? group.chats : [];
+    return ids
+        .filter(Boolean)
+        .map(chatId => ({ file_name: String(chatId).replace(/\.jsonl$/i, '') }));
+}
+
+/**
+ * Fetch the parsed messages of a single GROUP chat file.
+ * CONFIRMED endpoint family: POST /api/chats/group/get with { id: chatId }.
+ * Returns the same header+messages JSONL shape as the character endpoint, so we
+ * filter to objects carrying a `mes` string (drops the metadata header line).
+ * @param {string} chatId - group chat file id (with or without .jsonl)
+ * @returns {Promise<Array<{name:string,is_user:boolean,mes:string}>>}
+ */
+export async function getGroupChatMessages(chatId) {
+    if (!chatId) return [];
+    const bare = String(chatId).replace(/\.jsonl$/i, '');
+    try {
+        const response = await fetch('/api/chats/group/get', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({ id: bare }),
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        if (!Array.isArray(data)) return [];
+        return data.filter(m => m && typeof m.mes === 'string');
+    } catch (e) {
+        logError('getGroupChatMessages failed:', e);
+        return [];
+    }
+}
+
+/**
+ * Open a specific group chat. Group opening differs from characters: we select
+ * the group (openGroupById) and, when a specific chat is requested that isn't
+ * the group's active one, switch to it via the group chat open path.
+ *
+ * ST API names here are feature-detected because they vary/aren't guaranteed on
+ * the context object across versions. If only the group can be opened (not the
+ * exact chat), we still open the group and warn rather than failing silently.
+ * @param {string} groupId
+ * @param {string} chatId - group chat file id (without extension preferred)
+ * @returns {Promise<boolean>} true if an open was attempted
+ */
+export async function openGroupChat(groupId, chatId) {
+    const context = getContext();
+    if (!groupId) return false;
+    const bare = chatId ? String(chatId).replace(/\.jsonl$/i, '') : '';
+
+    // Preferred: a direct "open this group's specific chat" call if exposed.
+    if (typeof context.openGroupChat === 'function' && bare) {
+        try { await context.openGroupChat(groupId, bare); return true; }
+        catch (e) { logWarn('context.openGroupChat failed, falling back:', e?.message); }
+    }
+
+    // Select the group (loads its active chat).
+    if (typeof context.openGroupById === 'function') {
+        try {
+            await context.openGroupById(groupId);
+            // If a different chat was requested, try to switch to it.
+            const group = findGroup(groupId);
+            const active = group?.chat_id ? String(group.chat_id).replace(/\.jsonl$/i, '') : '';
+            if (bare && active && bare !== active) {
+                if (typeof context.openGroupChat === 'function') {
+                    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                    try { await context.openGroupChat(groupId, bare); }
+                    catch { logWarn('Opened group but could not switch to chat', bare); }
+                } else {
+                    logWarn('Opened group; specific-chat switch API unavailable for', bare);
+                }
+            }
+            return true;
+        } catch (e) {
+            logError('openGroupById failed:', e);
+        }
+    }
+
+    logWarn('No available method to open group chat', groupId, bare);
+    return false;
+}
+
+// ============================================================
 // Personas
 // ============================================================
 
@@ -220,6 +361,27 @@ export async function openChatForCharacter(avatar, fileName) {
     // Fallback: try a plain open against whatever's selected (best effort).
     await openChat(fileName);
     return true;
+}
+
+/**
+ * Open a stored chat entry regardless of its source (character or group).
+ * This is the single entry point the Display / sidebar should use so callers
+ * never branch on source themselves.
+ *
+ * - source 'character' → existing openChatForCharacter path.
+ * - source 'group'     → group open path (implemented in Step 4; until then it
+ *   logs and returns false rather than silently doing nothing wrong).
+ *
+ * @param {{source?:string, avatar?:string, groupId?:string, file_name:string}} entry
+ * @returns {Promise<boolean>} true if an open was attempted
+ */
+export async function openChatEntry(entry) {
+    if (!entry || !entry.file_name) return false;
+    const source = entry.source || 'character';
+    if (source === 'group') {
+        return openGroupChat(entry.groupId, entry.file_name);
+    }
+    return openChatForCharacter(entry.avatar, entry.file_name);
 }
 
 // ============================================================

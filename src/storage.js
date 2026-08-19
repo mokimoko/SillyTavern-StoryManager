@@ -23,6 +23,89 @@ function genId(prefix) {
 }
 
 // ============================================================
+// Cast helpers (multi-character / group support)
+// ============================================================
+//
+// A storyline has a single `primary` anchor (cover/title subject) plus an
+// open-ended `participants` set. Both a character and a whole group can be a
+// cast member. The legacy `character` field is kept mirrored to a
+// character-type primary so older readers keep working during the transition.
+// See docs/GAMEPLAN-multichar-groups.md.
+
+/** Build the primary cast anchor from a partial, deriving it from the legacy
+ *  `character` field when no explicit `primary` is supplied. */
+function normalizePrimary(partial = {}) {
+    if (partial.primary && partial.primary.type) {
+        const p = partial.primary;
+        return p.type === 'group'
+            ? { type: 'group', groupId: p.groupId || '', name: p.name || '' }
+            : {
+                type: 'character',
+                avatar: p.avatar || '',
+                name: p.name || '',
+                displayName: p.displayName || p.name || '',
+            };
+    }
+    const c = partial.character || {};
+    return {
+        type: 'character',
+        avatar: c.avatar || '',
+        name: c.name || '',
+        displayName: c.displayName || c.name || '',
+    };
+}
+
+/** True if a cast entry carries any identity (used to decide whether a lone
+ *  primary should seed the participants list). */
+function partHasIdentity(p) {
+    return !!(p && (p.avatar || p.groupId || p.name));
+}
+
+/** The effective participant list for a storyline, tolerant of un-migrated
+ *  data (falls back to primary, then the legacy `character`). */
+function participantsOf(sl) {
+    if (Array.isArray(sl?.participants) && sl.participants.length) return sl.participants;
+    if (sl?.primary && partHasIdentity(sl.primary)) return [sl.primary];
+    if (sl?.character && partHasIdentity(sl.character)) {
+        return [{ type: 'character', ...sl.character }];
+    }
+    return [];
+}
+
+/** Does a storyline's cast include the referenced character or group?
+ *  @param {{avatar?:string, groupId?:string}} ref */
+function storylineHasParticipant(sl, ref) {
+    return participantsOf(sl).some(p => {
+        if (ref.avatar) return (p.type ?? 'character') === 'character' && p.avatar === ref.avatar;
+        if (ref.groupId) return p.type === 'group' && p.groupId === ref.groupId;
+        return false;
+    });
+}
+
+/** Composite match for a chat entry: file name plus (when supplied) its source
+ *  and owning character/group. Prevents same-named files from different sources
+ *  (e.g. "New Chat" under two cards, or a group chat) colliding in the
+ *  ≤1-owner rule. A missing `ref` preserves the legacy file-name-only match.
+ *  @param {{source?:string, avatar?:string, groupId?:string}} [ref] */
+function chatEntryMatches(entry, fileName, ref) {
+    if (entry.file_name !== fileName) return false;
+    if (!ref) return true;
+    const entrySource = entry.source || 'character';
+    const refSource = ref.source || 'character';
+    if (entrySource !== refSource) return false;
+    if (refSource === 'group') {
+        // Only exclude on a genuine mismatch; tolerate blanks on legacy entries.
+        return !(ref.groupId && entry.groupId && ref.groupId !== entry.groupId);
+    }
+    return !(ref.avatar && entry.avatar && ref.avatar !== entry.avatar);
+}
+
+/** Derive a chat-match ref from an entry / assignment payload. */
+function refFromChatData(data = {}) {
+    return { source: data.source || 'character', avatar: data.avatar || '', groupId: data.groupId || '' };
+}
+
+// ============================================================
 // Factories (canonical shapes — single source of truth)
 // ============================================================
 
@@ -46,6 +129,15 @@ export function makeBook(partial = {}) {
 
 export function makeStoryline(partial = {}) {
     const now = Date.now();
+    const primary = normalizePrimary(partial);
+    const participants = Array.isArray(partial.participants) && partial.participants.length
+        ? partial.participants.map(p => ({ ...p }))
+        : (partHasIdentity(primary) ? [{ ...primary }] : []);
+    // Legacy mirror: keep `character` in sync with a character-type primary so
+    // code still reading storyline.character during the transition keeps working.
+    const character = primary.type === 'character'
+        ? { name: primary.name, avatar: primary.avatar, displayName: primary.displayName }
+        : (partial.character || { name: '', avatar: '', displayName: '' });
     return {
         id: partial.id || genId('story'),
         title: partial.title || 'Untitled Storyline',
@@ -55,7 +147,9 @@ export function makeStoryline(partial = {}) {
         coverThumb: partial.coverThumb || null,
         heroImage: partial.heroImage || null,
         heroThumb: partial.heroThumb || null,
-        character: partial.character || { name: '', avatar: '', displayName: '' },
+        primary,
+        participants,
+        character,
         mainPersonas: Array.isArray(partial.mainPersonas) ? partial.mainPersonas : [],
         tags: partial.tags || { character: [], persona: [], npc: [], freeform: [] },
         chats: Array.isArray(partial.chats) ? partial.chats : [],
@@ -70,6 +164,11 @@ export function makeStoryline(partial = {}) {
 export function makeChatEntry(partial = {}) {
     return {
         file_name: partial.file_name || '',
+        // Source discriminator: 'character' (owned by a card, uses `avatar`) or
+        // 'group' (owned by an ST group, uses `groupId`). Defaults to character
+        // so every legacy entry reads correctly without migration.
+        source: partial.source || 'character',
+        groupId: partial.groupId || '',
         character: partial.character || '',
         avatar: partial.avatar || '',
         image: partial.image || null,
@@ -83,6 +182,45 @@ export function makeChatEntry(partial = {}) {
         quotes: Array.isArray(partial.quotes) ? partial.quotes : [],
         // quotes: [{ text, speaker, context, source: 'summarizer'|'manual' }]
     };
+}
+
+// ============================================================
+// Migration (legacy single-character → primary + participants)
+// ============================================================
+
+/**
+ * Bring a loaded store up to the multi-cast shape in place. Idempotent and
+ * cheap: only touches storylines/chats still missing the new fields, so it's
+ * safe to run on every load. Returns true if anything changed.
+ */
+export function migrateStoreShape(store) {
+    if (!store || !store.storylines) return false;
+    let changed = false;
+    for (const sl of Object.values(store.storylines)) {
+        if (!sl.primary) {
+            sl.primary = normalizePrimary(sl);
+            changed = true;
+        }
+        if (!Array.isArray(sl.participants)) {
+            sl.participants = partHasIdentity(sl.primary) ? [{ ...sl.primary }] : [];
+            changed = true;
+        }
+        for (const c of (sl.chats || [])) {
+            if (!c.source) { c.source = 'character'; changed = true; }
+            if (c.groupId === undefined) { c.groupId = ''; changed = true; }
+        }
+    }
+    if (changed) store.version = 2;
+    return changed;
+}
+
+/**
+ * Run migration once at extension init. Wired from index.js before any UI
+ * opens. Persists only if the migration actually changed something.
+ */
+export async function initStorage() {
+    const store = await getStore();
+    if (migrateStoreShape(store)) saveStore(store);
 }
 
 // ============================================================
@@ -161,6 +299,14 @@ export async function updateStoryline(storylineId, updates = {}) {
     const sl = store.storylines[storylineId];
     if (!sl) return null;
     Object.assign(sl, updates, { id: sl.id, lastModified: new Date().toISOString() });
+    // Legacy editors update `character` without touching the cast. Keep primary +
+    // participants coherent by re-deriving them — but only when the caller didn't
+    // manage the cast explicitly (Step 3's editor passes primary/participants and
+    // must not be clobbered here).
+    if ('character' in updates && !('primary' in updates) && !('participants' in updates)) {
+        sl.primary = normalizePrimary(sl);
+        sl.participants = partHasIdentity(sl.primary) ? [{ ...sl.primary }] : [];
+    }
     saveStore(store);
     return sl;
 }
@@ -227,12 +373,15 @@ export async function assignStorylineToBook(storylineId, bookId) {
  * when used inside other storage functions that already hold a reference.
  * @param {string} fileName
  * @param {object} [_store] - optional pre-fetched store object
+ * @param {{source?:string, avatar?:string, groupId?:string}} [ref] - optional
+ *   source descriptor; when supplied, matching is composite (file + source +
+ *   owner) so same-named files from different cards/groups don't collide.
  * @returns {{storyline: object, index: number} | null}
  */
-export async function getStorylineForChat(fileName, _store) {
+export async function getStorylineForChat(fileName, _store, ref) {
     const store = _store || await getStore();
     for (const sl of Object.values(store.storylines)) {
-        const index = sl.chats.findIndex(c => c.file_name === fileName);
+        const index = sl.chats.findIndex(c => chatEntryMatches(c, fileName, ref));
         if (index !== -1) return { storyline: sl, index };
     }
     return null;
@@ -250,8 +399,11 @@ export async function assignChatToStoryline(fileName, storylineId, chatData = {}
     const target = store.storylines[storylineId];
     if (!target) return { ok: false, error: 'Target storyline not found' };
 
-    // Pass the store through to avoid a redundant getStore() call.
-    const existing = await getStorylineForChat(fileName, store);
+    // Pass the store through to avoid a redundant getStore() call. Match on the
+    // composite ref so a same-named file from a different card/group isn't seen
+    // as a conflict.
+    const ref = refFromChatData(chatData);
+    const existing = await getStorylineForChat(fileName, store, ref);
     if (existing && existing.storyline.id !== storylineId) {
         if (!move) {
             return {
@@ -270,7 +422,7 @@ export async function assignChatToStoryline(fileName, storylineId, chatData = {}
     // Already in the target? Merge, preserving any existing fields that the
     // incoming chatData doesn't explicitly provide (prevents accidental
     // clobbering of images/quotes/blurb when a caller omits them).
-    const idx = target.chats.findIndex(c => c.file_name === fileName);
+    const idx = target.chats.findIndex(c => chatEntryMatches(c, fileName, ref));
     if (idx !== -1) {
         // Build defaults from the EXISTING entry, then overlay incoming data.
         const merged = { ...target.chats[idx] };
@@ -295,10 +447,10 @@ export async function assignChatToStoryline(fileName, storylineId, chatData = {}
  * Remove a chat from its storyline (becomes unowned).
  * Accepts an optional pre-fetched store for batch operations.
  */
-export async function removeChatFromStoryline(fileName, _store) {
+export async function removeChatFromStoryline(fileName, _store, ref) {
     const store = _store || await getStore();
     // Re-find the index against the live store to avoid stale-index bugs.
-    const existing = await getStorylineForChat(fileName, store);
+    const existing = await getStorylineForChat(fileName, store, ref);
     if (!existing) return false;
     existing.storyline.chats.splice(existing.index, 1);
     existing.storyline.lastModified = new Date().toISOString();
@@ -310,10 +462,28 @@ export async function removeChatFromStoryline(fileName, _store) {
 // Queries
 // ============================================================
 
-/** All storylines whose character.avatar matches (the in-chat sidebar uses this). */
-export async function getStorylinesForCharacter(avatar) {
+/**
+ * All storylines whose cast includes the referenced character or group.
+ * @param {{avatar?:string, groupId?:string}} ref
+ */
+export async function getStorylinesForParticipant(ref) {
+    if (!ref || (!ref.avatar && !ref.groupId)) return [];
     const store = await getStore();
-    return Object.values(store.storylines).filter(sl => sl.character?.avatar === avatar);
+    return Object.values(store.storylines).filter(sl => storylineHasParticipant(sl, ref));
+}
+
+/**
+ * All storylines whose cast includes this character avatar (the in-chat sidebar
+ * uses this). Now matches the full participants set, not just the primary, so a
+ * multi-cast storyline surfaces under every character in it.
+ */
+export async function getStorylinesForCharacter(avatar) {
+    return getStorylinesForParticipant({ avatar });
+}
+
+/** All storylines whose cast includes this group. */
+export async function getStorylinesForGroup(groupId) {
+    return getStorylinesForParticipant({ groupId });
 }
 
 /** Storylines, in a book's curated order. */

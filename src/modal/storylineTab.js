@@ -20,6 +20,7 @@ import {
 } from '../storage.js';
 import {
     getAllCharacters, getAllPersonas, getChatsForCharacter,
+    getAllGroups, getChatsForGroup,
 } from '../stContext.js';
 import { extension_settings } from '../../../../../extensions.js';
 import { renderTagPicker } from '../components/tagPicker.js';
@@ -201,7 +202,7 @@ function slCardHtml(sl) {
             <div class="sm-card-body">
                 <div class="sm-card-title">${escapeHtml(sl.title)}</div>
                 <div class="sm-card-meta">
-                    ${escapeHtml(sl.character?.displayName || '—')} · ${chatCount} chat${chatCount === 1 ? '' : 's'}
+                    ${escapeHtml(primaryLabel(sl))} · ${chatCount} chat${chatCount === 1 ? '' : 's'}
                 </div>
             </div>
             <div class="sm-card-actions">
@@ -219,6 +220,47 @@ function slCardHtml(sl) {
 // DRAFT lifecycle
 // ============================================================
 
+/** Stable dedupe key for a cast participant (character avatar or group id). */
+function partKey(p) {
+    return (p?.type === 'group') ? `g:${p.groupId}` : `c:${p?.avatar}`;
+}
+
+/** Short label for a storyline's primary anchor (group name or character). */
+function primaryLabel(sl) {
+    if (sl?.primary?.type === 'group') return sl.primary.name || 'Group';
+    const chars = (sl?.participants || []).filter(p => (p.type ?? 'character') === 'character');
+    const base = sl?.primary?.displayName || sl?.character?.displayName || sl?.character?.name || '';
+    if (base && chars.length > 1) return `${base} +${chars.length - 1}`;
+    return base || '—';
+}
+
+/**
+ * Rebuild the editor's "additional cast" list from a stored storyline: every
+ * participant (character OR group) except the primary, which is shown
+ * separately. Tolerant of un-migrated data.
+ */
+function reconstructCast(sl) {
+    const primary = sl?.primary
+        || (sl?.character?.avatar ? { type: 'character', avatar: sl.character.avatar } : null);
+    const seen = new Set(primary ? [partKey(primary)] : []);
+    const out = [];
+    for (const p of (sl?.participants || [])) {
+        const type = p.type ?? 'character';
+        const key = partKey({ ...p, type });
+        if (seen.has(key)) continue;
+        if (type === 'group') {
+            if (!p.groupId) continue;
+            seen.add(key);
+            out.push({ type: 'group', groupId: p.groupId, name: p.name || '' });
+        } else {
+            if (!p.avatar) continue;
+            seen.add(key);
+            out.push({ type: 'character', name: p.name || '', avatar: p.avatar, displayName: p.displayName || p.name || '' });
+        }
+    }
+    return out;
+}
+
 /** Begin a blank draft (defaults to active character if one is selected). */
 function startNewDraft() {
     editingId = null;
@@ -232,12 +274,19 @@ function startNewDraft() {
         heroImage: null,
         heroThumb: null,
         character: { name: '', avatar: '', displayName: '' },
+        // Authoritative primary anchor. Null → derive a character primary from
+        // `character` on save. A group primary (from the sidebar) is kept here.
+        primary: null,
+        // Additional cast beyond the primary. Entries are {type:'character',...}
+        // or {type:'group', groupId, name}.
+        cast: [],
         mainPersonas: [],
         tags: { character: [], persona: [], npc: [], freeform: [] },
         chats: [],
         bookId: null,
         darPlaylist: null,
         _allChars: chars,
+        _allGroups: getAllGroups(),
     };
 }
 
@@ -255,6 +304,8 @@ async function loadDraft(id) {
         heroImage: sl.heroImage || null,
         heroThumb: sl.heroThumb || null,
         character: { ...(sl.character || { name: '', avatar: '', displayName: '' }) },
+        primary: sl.primary ? { ...sl.primary } : null,
+        cast: reconstructCast(sl),
         mainPersonas: (sl.mainPersonas || []).map(p => ({ ...p })),
         tags: {
             character: [...(sl.tags?.character || [])],
@@ -270,6 +321,7 @@ async function loadDraft(id) {
         bookId: sl.bookId || null,
         darPlaylist: sl.darPlaylist || null,
         _allChars: getAllCharacters(),
+        _allGroups: getAllGroups(),
     };
 }
 
@@ -326,14 +378,27 @@ async function renderEditView(container, ctx) {
             </div>
 
             <div class="sm-field">
-                <label class="sm-field-label">Character</label>
-                <select class="sm-select" id="sm-sl-char">
-                    <option value="">— select character —</option>
-                    ${draft._allChars.map(c => `
-                        <option value="${escapeAttr(c.avatar)}" ${c.avatar === draft.character.avatar ? 'selected' : ''}>
-                            ${escapeHtml(c.displayName)}
-                        </option>`).join('')}
-                </select>
+                <label class="sm-field-label">${draft.primary?.type === 'group' ? 'Primary (Group)' : 'Primary Character'}</label>
+                ${draft.primary?.type === 'group' ? `
+                    <div class="sm-primary-group">
+                        <i class="fa-solid fa-users"></i> ${escapeHtml(draft.primary.name || 'Group')}
+                    </div>
+                    <div class="sm-field-hint">This storyline is anchored to a group. Its group chats are listed below; you can also add characters as additional cast.</div>
+                ` : `
+                    <select class="sm-select" id="sm-sl-char">
+                        <option value="">— select character —</option>
+                        ${draft._allChars.map(c => `
+                            <option value="${escapeAttr(c.avatar)}" ${c.avatar === draft.character.avatar ? 'selected' : ''}>
+                                ${escapeHtml(c.displayName)}
+                            </option>`).join('')}
+                    </select>
+                    <div class="sm-field-hint">The cover/title anchor. Add more characters or groups below for a multi-character storyline.</div>
+                `}
+            </div>
+
+            <div class="sm-field">
+                <label class="sm-field-label">Additional Cast</label>
+                <div id="sm-sl-cast"></div>
             </div>
 
             <div class="sm-field">
@@ -376,6 +441,7 @@ async function renderEditView(container, ctx) {
     `;
 
     // Mount sub-components + wire form controls.
+    mountCastPicker(container, ctx);
     mountPersonaPicker(container);
     mountTagPicker(container);
     mountCover(container);
@@ -452,6 +518,109 @@ function renderPersonaPicker(host) {
             displayName: personaLabel(match),
         });
         renderPersonaPicker(host);
+    });
+}
+
+// ============================================================
+// Additional Cast — searchable multi-add (characters beyond the primary)
+// ============================================================
+
+function mountCastPicker(container, ctx) {
+    const host = container.querySelector('#sm-sl-cast');
+    if (host) renderCastPicker(host, container, ctx);
+}
+
+const GROUP_SUFFIX = ' (group)';
+
+function renderCastPicker(host, container, ctx) {
+    const allChars = draft._allChars || getAllCharacters();
+    const allGroups = draft._allGroups || getAllGroups();
+    const dlId = `sm-cast-dl-${Math.random().toString(36).slice(2, 8)}`;
+
+    // Exclusions: the primary + everything already in the cast.
+    const exclAvatars = new Set([
+        draft.primary?.type === 'character' ? draft.primary.avatar : draft.character?.avatar,
+        ...draft.cast.filter(c => c.type === 'character').map(c => c.avatar),
+    ].filter(Boolean));
+    const exclGroups = new Set([
+        draft.primary?.type === 'group' ? draft.primary.groupId : null,
+        ...draft.cast.filter(c => c.type === 'group').map(c => c.groupId),
+    ].filter(Boolean));
+
+    const selChars = allChars.filter(c => !exclAvatars.has(c.avatar));
+    const selGroups = allGroups.filter(g => !exclGroups.has(g.groupId));
+
+    const chips = draft.cast.length
+        ? draft.cast.map((c, i) => {
+            const isGroup = c.type === 'group';
+            const label = isGroup ? c.name : (c.displayName || c.name);
+            return `
+                <span class="sm-tag-pill ${isGroup ? 'sm-tag-freeform' : 'sm-tag-character'}" data-index="${i}">
+                    ${isGroup ? '<i class="fa-solid fa-users sm-cast-type-icon"></i> ' : ''}<span class="sm-tag-pill-text">${escapeHtml(label)}</span>
+                    <i class="fa-solid fa-xmark sm-cast-remove" title="Remove"></i>
+                </span>`;
+        }).join('')
+        : `<span class="sm-tag-empty">none</span>`;
+
+    host.innerHTML = `
+        <div class="sm-cast-picker sm-tag-section sm-tag-character">
+            <div class="sm-tag-pills">${chips}</div>
+            <div class="sm-tag-add">
+                <input type="text" class="sm-input sm-cast-input" list="${dlId}"
+                       placeholder="Add character or group…" />
+                <datalist id="${dlId}">
+                    ${selChars.map(c => `<option value="${escapeAttr(c.displayName)}"></option>`).join('')}
+                    ${selGroups.map(g => `<option value="${escapeAttr(g.name + GROUP_SUFFIX)}"></option>`).join('')}
+                </datalist>
+            </div>
+        </div>
+    `;
+
+    // Remove a cast member → refresh picker + chat list (available chats shrink).
+    host.querySelectorAll('.sm-cast-remove').forEach(el => {
+        el.addEventListener('click', async () => {
+            const pill = el.closest('[data-index]');
+            const idx = parseInt(pill.dataset.index, 10);
+            draft.cast.splice(idx, 1);
+            renderCastPicker(host, container, ctx);
+            await renderChatSection(container, ctx);
+        });
+    });
+
+    // Add via Enter — matches a character (by displayName/name) or, if the value
+    // carries the group suffix (or matches a group name), a group.
+    const input = host.querySelector('.sm-cast-input');
+    input?.addEventListener('keydown', async (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const raw = input.value.trim();
+        if (!raw) return;
+        const isGroupPick = raw.toLowerCase().endsWith(GROUP_SUFFIX);
+        const val = isGroupPick ? raw.slice(0, -GROUP_SUFFIX.length).trim() : raw;
+        const needle = val.toLowerCase();
+
+        if (!isGroupPick) {
+            const match = allChars.find(c => (c.displayName || '').toLowerCase() === needle)
+                       || allChars.find(c => (c.name || '').toLowerCase() === needle);
+            if (match) {
+                input.value = '';
+                if (exclAvatars.has(match.avatar)) return;
+                draft.cast.push({ type: 'character', name: match.name, avatar: match.avatar, displayName: match.displayName || match.name });
+                renderCastPicker(host, container, ctx);
+                await renderChatSection(container, ctx);
+                return;
+            }
+        }
+        const gmatch = allGroups.find(g => (g.name || '').toLowerCase() === needle);
+        if (gmatch) {
+            input.value = '';
+            if (exclGroups.has(gmatch.groupId)) return;
+            draft.cast.push({ type: 'group', groupId: gmatch.groupId, name: gmatch.name });
+            renderCastPicker(host, container, ctx);
+            await renderChatSection(container, ctx);
+            return;
+        }
+        input.value = '';
     });
 }
 
@@ -941,72 +1110,183 @@ async function uploadChatImage(file) {
  * NPC and freeform tags are left exactly as the user set them.
  */
 function syncAutoTags() {
-    draft.tags.character = draft.character?.name ? [draft.character.name] : [];
+    // Character tags cover the character cast (primary + additional), deduped.
+    // Group members are not character tags.
+    const names = [];
+    if (draft.character?.name) names.push(draft.character.name);
+    for (const c of draft.cast) {
+        if (c.type === 'group') continue;
+        if (c.name && !names.includes(c.name)) names.push(c.name);
+    }
+    draft.tags.character = names;
     draft.tags.persona = draft.mainPersonas.map(p => p.name).filter(Boolean);
+}
+
+/** Build the persisted cast (primary + additional participants) from the draft.
+ *  Handles a group primary (from the sidebar) and mixed character/group cast. */
+function buildCastPayload() {
+    let primary;
+    if (draft.primary?.type === 'group' && draft.primary.groupId) {
+        primary = { type: 'group', groupId: draft.primary.groupId, name: draft.primary.name || '' };
+    } else if (draft.character?.avatar) {
+        primary = {
+            type: 'character',
+            name: draft.character.name,
+            avatar: draft.character.avatar,
+            displayName: draft.character.displayName || draft.character.name,
+        };
+    } else {
+        primary = { type: 'character', avatar: '', name: '', displayName: '' };
+    }
+
+    const participants = [];
+    const seen = new Set();
+    const add = (p) => { const k = partKey(p); if (seen.has(k)) return; seen.add(k); participants.push(p); };
+    const primaryHasId = primary.type === 'group' ? !!primary.groupId : !!primary.avatar;
+    if (primaryHasId) add(primary);
+    for (const c of draft.cast) {
+        if (c.type === 'group') {
+            if (c.groupId) add({ type: 'group', groupId: c.groupId, name: c.name || '' });
+        } else if (c.avatar) {
+            add({ type: 'character', name: c.name || '', avatar: c.avatar, displayName: c.displayName || c.name || '' });
+        }
+    }
+    return { primary, participants };
 }
 
 // ============================================================
 // Chat assignment section
 // ============================================================
 
+/** The cast to enumerate chats for, split by kind. Primary first within each. */
+function castMembers() {
+    const chars = [];
+    const groups = [];
+    const seenC = new Set();
+    const seenG = new Set();
+    if (draft.primary?.type === 'group') {
+        if (draft.primary.groupId) { groups.push({ groupId: draft.primary.groupId, name: draft.primary.name || '' }); seenG.add(draft.primary.groupId); }
+    } else if (draft.character?.avatar) {
+        chars.push(draft.character); seenC.add(draft.character.avatar);
+    }
+    for (const c of draft.cast) {
+        if (c.type === 'group') {
+            if (c.groupId && !seenG.has(c.groupId)) { groups.push({ groupId: c.groupId, name: c.name || '' }); seenG.add(c.groupId); }
+        } else if (c.avatar && !seenC.has(c.avatar)) {
+            chars.push(c); seenC.add(c.avatar);
+        }
+    }
+    return { chars, groups };
+}
+
+/** Composite membership check within the draft (file + source + owner). */
+function chatInDraft(fn, ref) {
+    const source = ref.source || 'character';
+    return draft.chats.some(c => {
+        if (c.file_name !== fn || (c.source || 'character') !== source) return false;
+        return source === 'group'
+            ? (c.groupId || '') === (ref.groupId || '')
+            : (c.avatar || '') === (ref.avatar || '');
+    });
+}
+
+/** Find another storyline that already owns this chat (composite match). */
+function ownerForChat(allStorylines, fn, ref) {
+    const source = ref.source || 'character';
+    return allStorylines.find(sl => sl.id !== draft.id && (sl.chats || []).some(c => {
+        if (c.file_name !== fn || (c.source || 'character') !== source) return false;
+        return source === 'group'
+            ? (!c.groupId || !ref.groupId || c.groupId === ref.groupId)
+            : (!c.avatar || !ref.avatar || c.avatar === ref.avatar);
+    }));
+}
+
+/** Render one cast member's block of assignable chat rows. */
+function renderMemberBlock({ headerIcon, headerLabel, multi, files, allStorylines, refFor, emptyLabel }) {
+    const header = multi
+        ? `<div class="sm-chat-cast-header"><i class="fa-solid ${headerIcon}"></i> ${escapeHtml(headerLabel)}</div>`
+        : '';
+    const rows = files.length
+        ? files.map(cf => {
+            const fn = cf.file_name;
+            const ref = refFor(fn);
+            const owner = ownerForChat(allStorylines, fn, ref);
+            const checked = chatInDraft(fn, ref);
+            return `
+                <label class="sm-chat-assign-row ${owner ? 'sm-chat-owned' : ''}">
+                    <input type="checkbox" class="sm-chat-assign-cb"
+                           data-file="${escapeAttr(fn)}"
+                           data-source="${escapeAttr(ref.source)}"
+                           data-avatar="${escapeAttr(ref.avatar || '')}"
+                           data-groupid="${escapeAttr(ref.groupId || '')}"
+                           data-name="${escapeAttr(ref.name || '')}"
+                           data-owner-id="${owner ? escapeAttr(owner.id) : ''}"
+                           data-owner-title="${owner ? escapeAttr(owner.title) : ''}"
+                           ${checked ? 'checked' : ''} />
+                    <span class="sm-chat-assign-name" title="${escapeAttr(fn)}">
+                        ${escapeHtml(prettyName(fn))}
+                    </span>
+                    ${owner ? `<span class="sm-chat-owner-badge" title="Owned by another storyline">
+                        <i class="fa-solid fa-link"></i> ${escapeHtml(owner.title)}
+                    </span>` : ''}
+                </label>
+            `;
+        }).join('')
+        : `<div class="sm-empty">${escapeHtml(emptyLabel)}</div>`;
+    return `${header}${rows}`;
+}
+
 async function renderChatSection(container, ctx) {
     const host = container.querySelector('#sm-sl-chats');
     if (!host) return;
 
-    const avatar = draft.character?.avatar;
-    if (!avatar) {
-        host.innerHTML = `<div class="sm-empty">Select a character above to list its chats.</div>`;
+    const { chars, groups } = castMembers();
+    if (!chars.length && !groups.length) {
+        host.innerHTML = `<div class="sm-empty">Add at least one character or group above to list its chats.</div>`;
         return;
     }
 
     host.innerHTML = `<div class="sm-empty">Loading chats…</div>`;
-    const chatFiles = await getChatsForCharacter(avatar, { simple: true });
 
-    if (!chatFiles.length) {
-        host.innerHTML = `<div class="sm-empty">No chat files found for this character.</div>`;
-        return;
-    }
+    // Fetch every member's chat files in parallel (characters + groups).
+    const [charData, groupData] = await Promise.all([
+        Promise.all(chars.map(async (ch) => ({ member: ch, files: await getChatsForCharacter(ch.avatar, { simple: true }) }))),
+        Promise.all(groups.map(async (g) => ({ member: g, files: await getChatsForGroup(g.groupId) }))),
+    ]);
 
-    // Ownership map: which chats already belong to OTHER storylines (live store).
     const allStorylines = Object.values(await getStorylines());
-    const ownerOf = (fn) => allStorylines.find(sl =>
-        sl.id !== draft.id && (sl.chats || []).some(c => c.file_name === fn));
+    const multi = (chars.length + groups.length) > 1;
 
-    const inDraft = (fn) => draft.chats.some(c => c.file_name === fn);
+    const charSections = charData.map(({ member, files }) => renderMemberBlock({
+        headerIcon: 'fa-user',
+        headerLabel: member.displayName || member.name,
+        multi, files, allStorylines,
+        emptyLabel: 'No chat files found for this character.',
+        refFor: () => ({ source: 'character', avatar: member.avatar, name: member.name }),
+    }));
+    const groupSections = groupData.map(({ member, files }) => renderMemberBlock({
+        headerIcon: 'fa-users',
+        headerLabel: member.name,
+        multi, files, allStorylines,
+        emptyLabel: 'No chat files found for this group.',
+        refFor: () => ({ source: 'group', groupId: member.groupId, name: member.name }),
+    }));
 
-    host.innerHTML = `
-        <div class="sm-chat-assign-list">
-            ${chatFiles.map(cf => {
-                const fn = cf.file_name;
-                const owner = ownerOf(fn);
-                const checked = inDraft(fn);
-                return `
-                    <label class="sm-chat-assign-row ${owner ? 'sm-chat-owned' : ''}">
-                        <input type="checkbox" class="sm-chat-assign-cb"
-                               data-file="${escapeAttr(fn)}"
-                               data-owner-id="${owner ? escapeAttr(owner.id) : ''}"
-                               data-owner-title="${owner ? escapeAttr(owner.title) : ''}"
-                               ${checked ? 'checked' : ''} />
-                        <span class="sm-chat-assign-name" title="${escapeAttr(fn)}">
-                            ${escapeHtml(prettyName(fn))}
-                        </span>
-                        ${owner ? `<span class="sm-chat-owner-badge" title="Owned by another storyline">
-                            <i class="fa-solid fa-link"></i> ${escapeHtml(owner.title)}
-                        </span>` : ''}
-                    </label>
-                `;
-            }).join('')}
-        </div>
-    `;
+    host.innerHTML = `<div class="sm-chat-assign-list">${[...charSections, ...groupSections].join('')}</div>`;
 
-    wireChatSection(host, container, chatFiles);
+    wireChatSection(host, container);
 }
 
-function wireChatSection(host, container, chatFiles) {
+function wireChatSection(host, container) {
     host.querySelectorAll('.sm-chat-assign-cb').forEach(cb => {
         cb.addEventListener('change', () => {
             const fn = cb.dataset.file;
-            const meta = chatFiles.find(c => c.file_name === fn) || {};
+            const ref = {
+                source: cb.dataset.source || 'character',
+                avatar: cb.dataset.avatar || '',
+                groupId: cb.dataset.groupid || '',
+                name: cb.dataset.name || '',
+            };
 
             if (cb.checked) {
                 // Warn if this chat belongs to another storyline (move-on-save).
@@ -1016,12 +1296,14 @@ function wireChatSection(host, container, chatFiles) {
                         `Move it to this storyline on save?`);
                     if (!ok) { cb.checked = false; return; }
                 }
-                if (!draft.chats.some(c => c.file_name === fn)) {
+                if (!chatInDraft(fn, ref)) {
                     const maxOrder = draft.chats.reduce((m, c) => Math.max(m, c.chronoOrder || 0), -1);
                     draft.chats.push({
                         file_name: fn,
-                        character: draft.character.name,
-                        avatar: draft.character.avatar,
+                        source: ref.source,
+                        groupId: ref.groupId,
+                        character: ref.name,
+                        avatar: ref.avatar,
                         image: null, blurb: '',
                         chronoOrder: maxOrder + 1,
                         chronoLabel: null, hasSummary: false,
@@ -1029,7 +1311,12 @@ function wireChatSection(host, container, chatFiles) {
                     });
                 }
             } else {
-                draft.chats = draft.chats.filter(c => c.file_name !== fn);
+                draft.chats = draft.chats.filter(c => !(
+                    c.file_name === fn
+                    && (c.source || 'character') === ref.source
+                    && (ref.source === 'group'
+                        ? (c.groupId || '') === ref.groupId
+                        : (c.avatar || '') === ref.avatar)));
             }
             // Chat list changed — invalidate the cached gen availability.
             draft._genAvailCache = null;
@@ -1060,13 +1347,17 @@ function wireEditControls(container, ctx) {
 
     wireDescGen(container);
 
-    // Character select — updates identity; re-renders so the chat list reflects it.
+    // Primary character select — updates identity; refreshes the cast picker
+    // (its exclusion list changed) and the chat list (available chats changed).
     container.querySelector('#sm-sl-char')?.addEventListener('change', async (e) => {
         const avatar = e.target.value;
         const match = draft._allChars.find(c => c.avatar === avatar);
         draft.character = match
             ? { name: match.name, avatar: match.avatar, displayName: match.displayName }
             : { name: '', avatar: '', displayName: '' };
+        // A character can't be both primary and additional cast.
+        if (avatar) draft.cast = draft.cast.filter(c => c.avatar !== avatar);
+        mountCastPicker(container, ctx);
         await renderChatSection(container, ctx);
     });
 
@@ -1151,6 +1442,9 @@ async function saveDraft(container, ctx) {
 
     // The metadata payload (everything except chats, which go through the
     // ownership-aware assignment path so the ≤1-owner rule is enforced).
+    // Cast is passed explicitly (primary + participants) so updateStoryline does
+    // NOT re-derive it from `character` and clobber the additional cast.
+    const { primary, participants } = buildCastPayload();
     const payload = {
         title: draft.title.trim(),
         description: draft.description,
@@ -1159,6 +1453,8 @@ async function saveDraft(container, ctx) {
         heroImage: draft.heroImage,
         heroThumb: draft.heroThumb,
         character: draft.character,
+        primary,
+        participants,
         mainPersonas: draft.mainPersonas,
         tags: draft.tags,
         bookId: draft.bookId,
@@ -1176,13 +1472,21 @@ async function saveDraft(container, ctx) {
 
     // Reconcile chats. Remove any that were unchecked, then assign the draft set
     // (move=true because the inline confirm already got user consent on conflicts).
+    // Keyed by a composite (source|owner|file) so same-named files from different
+    // cast members / groups are reconciled independently.
+    const chatKey = (c) => `${c.source || 'character'}|${c.source === 'group' ? (c.groupId || '') : (c.avatar || '')}|${c.file_name}`;
     const current = (await getStoryline(storylineId))?.chats || [];
-    const draftFiles = new Set(draft.chats.map(c => c.file_name));
+    const draftKeys = new Set(draft.chats.map(chatKey));
     for (const c of current) {
-        if (!draftFiles.has(c.file_name)) await removeChatFromStoryline(c.file_name);
+        if (!draftKeys.has(chatKey(c))) {
+            await removeChatFromStoryline(c.file_name, undefined,
+                { source: c.source || 'character', avatar: c.avatar, groupId: c.groupId });
+        }
     }
     for (const c of draft.chats) {
         await assignChatToStoryline(c.file_name, storylineId, {
+            source: c.source || 'character',
+            groupId: c.groupId || '',
             character: c.character,
             avatar: c.avatar,
             image: c.image,

@@ -13,9 +13,11 @@ import { initFileStore } from './src/fileStore.js';
 import { initWordCountCapture } from './src/wordCountCapture.js';
 import { initSettings, getSetting, isEnabled } from './src/settings.js';
 import {
+    initStorage,
     getBooks, getBook, createBook, updateBook, deleteBook,
     getStorylines, getStoryline, createStoryline, updateStoryline, deleteStoryline,
-    assignStorylineToBook, getStorylinesForCharacter, getStorylinesInBook,
+    assignStorylineToBook, getStorylinesForCharacter, getStorylinesForGroup,
+    getStorylinesForParticipant, getStorylinesInBook,
     getStorylineForChat, assignChatToStoryline, removeChatFromStoryline,
 } from './src/storage.js';
 import {
@@ -189,6 +191,8 @@ function exposePublicAPI() {
         updateStoryline,
         deleteStoryline,
         getStorylinesForCharacter,
+        getStorylinesForGroup,
+        getStorylinesForParticipant,
         getStorylinesInBook,
         assignStorylineToBook,
 
@@ -230,6 +234,7 @@ jQuery(async () => {
     initFileStore();
     initWordCountCapture();
     initSettings();
+    await initStorage();   // migrate legacy storylines to primary + participants
 
     loadStylesheets();
     setupInputButton();

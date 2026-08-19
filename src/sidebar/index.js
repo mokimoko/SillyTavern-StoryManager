@@ -15,9 +15,11 @@
 import { getSetting, setSetting } from '../settings.js';
 import {
     getCurrentCharacter, getChatsForCharacter,
+    getCurrentGroup, getChatsForGroup,
 } from '../stContext.js';
 import {
-    getStorylinesForCharacter, createStoryline, assignChatToStoryline,
+    getStorylinesForCharacter, getStorylinesForGroup, getStorylines,
+    createStoryline, assignChatToStoryline,
 } from '../storage.js';
 import { openModal } from '../modal/index.js';
 import { openDisplay } from '../display/index.js';
@@ -161,13 +163,17 @@ async function renderContents() {
     const body = document.getElementById('sm-sb-body');
     if (!body) return;
 
+    // Group chats have no single active character — render the group surface.
+    const group = getCurrentGroup();
+    if (group) { await renderGroupContents(body, group); return; }
+
     const character = getCurrentCharacter();
     if (!character) {
         body.innerHTML = `
             <div class="sm-empty-state">
                 <i class="fa-solid fa-user-slash"></i>
-                <p>No character selected</p>
-                <span class="sm-empty-hint">Open a character chat to manage its storylines.</span>
+                <p>No character or group selected</p>
+                <span class="sm-empty-hint">Open a chat to manage its storylines.</span>
             </div>`;
         return;
     }
@@ -317,6 +323,150 @@ async function assignSelection(files, target, character, chatFiles) {
                     character: character.name, avatar: character.avatar,
                 }, true);
             }
+        }
+    }
+}
+
+// ============================================================
+// Group mode
+// ============================================================
+
+async function renderGroupContents(body, group) {
+    body.innerHTML = `<div class="sm-empty">Loading…</div>`;
+
+    const [chatFiles, tagged] = await Promise.all([
+        getChatsForGroup(group.groupId),
+        getStorylinesForGroup(group.groupId),
+    ]);
+
+    // "Related" = storylines whose cast includes a MEMBER of this group but that
+    // aren't tagged to the group itself (the two-section view). Computed once.
+    const taggedIds = new Set(tagged.map(sl => sl.id));
+    const members = new Set(group.members || []);
+    const allStorylines = Object.values(await getStorylines());
+    const related = allStorylines.filter(sl => {
+        if (taggedIds.has(sl.id)) return false;
+        return (sl.participants || []).some(p =>
+            (p.type ?? 'character') === 'character' && p.avatar && members.has(p.avatar));
+    });
+
+    // Which of this group's chats already belong to a storyline (group-source,
+    // same group), for the owned badges.
+    const ownerByFile = {};
+    for (const sl of allStorylines) {
+        for (const c of (sl.chats || [])) {
+            if ((c.source || 'character') === 'group' && c.groupId === group.groupId) {
+                ownerByFile[c.file_name] = sl;
+            }
+        }
+    }
+
+    body.innerHTML = `
+        <div class="sm-sb-section">
+            <div class="sm-sb-current">
+                <span class="sm-sb-current-label">Current group</span>
+                <span class="sm-sb-current-name"><i class="fa-solid fa-users"></i> ${escapeHtml(group.name)}</span>
+            </div>
+        </div>
+
+        <div class="sm-sb-section">
+            <div class="sm-field-label">Chats <span class="sm-sb-count">${chatFiles.length}</span></div>
+            <div class="sm-sb-chatlist" id="sm-sb-chatlist">
+                ${chatFiles.length ? chatFiles.map(cf => chatRowHtml(cf, ownerByFile[cf.file_name])).join('')
+                    : `<div class="sm-empty">No chats for this group.</div>`}
+            </div>
+        </div>
+
+        <div class="sm-sb-section sm-sb-assign" id="sm-sb-assign" hidden>
+            <div class="sm-field-label">Assign selected →</div>
+            <select class="sm-select" id="sm-sb-target">
+                <option value="">— choose storyline —</option>
+                ${tagged.map(sl => `<option value="${escapeAttr(sl.id)}">${escapeHtml(sl.title)}</option>`).join('')}
+                <option value="__new__">+ New storyline…</option>
+            </select>
+            <button class="sm-btn sm-btn-accent sm-sb-assign-go" id="sm-sb-assign-go">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Assign
+            </button>
+        </div>
+
+        <div class="sm-sb-section">
+            <div class="sm-field-label">This group's storylines <span class="sm-sb-count">${tagged.length}</span></div>
+            <div class="sm-sb-sllist">
+                ${tagged.length ? tagged.map(slRowHtml).join('')
+                    : `<div class="sm-empty">None yet.</div>`}
+            </div>
+        </div>
+
+        ${related.length ? `
+        <div class="sm-sb-section">
+            <div class="sm-field-label">Related <span class="sm-sb-count">${related.length}</span></div>
+            <div class="sm-field-hint">Shares a character with this group.</div>
+            <div class="sm-sb-sllist">
+                ${related.map(slRowHtml).join('')}
+            </div>
+        </div>` : ''}
+    `;
+
+    wireGroupBody(body, group);
+}
+
+function wireGroupBody(body, group) {
+    const assignPanel = body.querySelector('#sm-sb-assign');
+    const checkboxes = () => [...body.querySelectorAll('.sm-sb-chat-cb')];
+    const selected = () => checkboxes().filter(cb => cb.checked).map(cb => cb.dataset.file);
+
+    body.querySelectorAll('.sm-sb-chat-cb').forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (assignPanel) assignPanel.hidden = selected().length === 0;
+        });
+    });
+
+    body.querySelectorAll('.sm-sb-sl-row').forEach(row => {
+        row.addEventListener('click', () => {
+            closeSidebar();
+            openEntryPoint('storylines');
+        });
+    });
+
+    body.querySelector('#sm-sb-assign-go')?.addEventListener('click', async () => {
+        const files = selected();
+        if (!files.length) return;
+        const target = body.querySelector('#sm-sb-target')?.value;
+        if (!target) { alert('Pick a storyline (or create a new one).'); return; }
+        await assignGroupSelection(files, target, group);
+        renderContents();
+    });
+}
+
+/**
+ * Assign selected group chats to a storyline. A brand-new storyline gets the
+ * group itself as its primary (so group-exclusive users get a storyline with no
+ * solo character). Chats are recorded with source:'group' + the group id.
+ */
+async function assignGroupSelection(files, target, group) {
+    let storylineId = target;
+
+    if (target === '__new__') {
+        const title = prompt('New storyline title:', group.name || '');
+        if (title === null) return;
+        const primary = { type: 'group', groupId: group.groupId, name: group.name };
+        const created = await createStoryline({
+            title: title.trim() || 'Untitled Storyline',
+            primary,
+            participants: [primary],
+            tags: { character: [], persona: [], npc: [], freeform: group.name ? [group.name] : [] },
+        });
+        storylineId = created.id;
+    }
+
+    const warn = getSetting('warnOnChatMove') !== false;
+    for (const fn of files) {
+        const chatData = { source: 'group', groupId: group.groupId, character: group.name };
+        const res = await assignChatToStoryline(fn, storylineId, chatData, false);
+        if (res && res.ok === false && res.conflict) {
+            const ok = !warn || confirm(
+                `"${prettyName(fn)}" is already in "${res.conflict.title}". Move it here?`);
+            if (ok) await assignChatToStoryline(fn, storylineId, chatData, true);
         }
     }
 }

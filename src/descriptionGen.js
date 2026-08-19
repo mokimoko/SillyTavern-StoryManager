@@ -22,6 +22,7 @@
 import {
     getSummaryForChat,
     getChatMessages,
+    getGroupChatMessages,
     generateText,
     hasSummarizer,
 } from './stContext.js';
@@ -65,8 +66,10 @@ async function gatherChatContext(chatEntry) {
     const summaryText = summary?.text?.trim();
     if (summaryText) return { text: summaryText, source: 'summary' };
 
-    // 2. Fallback: sample raw messages.
-    const messages = await getChatMessages(chatEntry.avatar, fileName);
+    // 2. Fallback: sample raw messages (source-aware: character vs group chat).
+    const messages = chatEntry.source === 'group'
+        ? await getGroupChatMessages(fileName)
+        : await getChatMessages(chatEntry.avatar, fileName);
     if (!messages.length) return { text: '', source: 'none' };
 
     const head = messages.slice(0, SAMPLE_HEAD);
@@ -114,7 +117,17 @@ async function gatherStorylineContext(storyline) {
 function storylineMeta(storyline) {
     const bits = [];
     if (storyline.title) bits.push(`Title: ${storyline.title}`);
-    if (storyline.character?.displayName || storyline.character?.name) {
+    // Prefer the full character cast (participants); fall back to the legacy
+    // single character for un-migrated data.
+    const castNames = (storyline.participants || [])
+        .filter(p => (p.type ?? 'character') === 'character')
+        .map(p => p.displayName || p.name)
+        .filter(Boolean);
+    if (castNames.length > 1) {
+        bits.push(`Main characters: ${castNames.join(', ')}`);
+    } else if (castNames.length === 1) {
+        bits.push(`Main character: ${castNames[0]}`);
+    } else if (storyline.character?.displayName || storyline.character?.name) {
         bits.push(`Main character: ${storyline.character.displayName || storyline.character.name}`);
     }
     const personas = (storyline.mainPersonas || [])
