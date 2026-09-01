@@ -405,14 +405,14 @@
     background-color: transparent;
 }
 .sm-content::-webkit-scrollbar-track { background-color: transparent; }
-.sm-content::-webkit-scrollbar-track:hover {
+.sm-content:hover::-webkit-scrollbar-track {
     background-color: var(--SmartThemeChatTintColor);
     border-left: 1px solid var(--SmartThemeBorderColor);
 }
 .sm-content::-webkit-scrollbar-thumb {
     background-color: var(--SmartThemeUnderlineColor);
 }
-.sm-content::-webkit-scrollbar-thumb:hover {
+.sm-content:hover::-webkit-scrollbar-thumb {
     background-color: var(--SmartThemeQuoteColor);
 }
 .sm-content::-webkit-scrollbar-button,

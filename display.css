@@ -933,7 +933,7 @@
 .sm-cd-body::-webkit-scrollbar { width: 5px; }
 .sm-cd-body::-webkit-scrollbar-track { background: transparent; }
 .sm-cd-body::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
-.sm-cd-body::-webkit-scrollbar-thumb:hover { background: var(--sm-accent-border); }
+.sm-cd-body:hover::-webkit-scrollbar-thumb { background: var(--sm-accent-border); }
 .sm-cd-section { margin-bottom: 18px; }
 .sm-cd-section:last-child { margin-bottom: 0; }
 
@@ -1116,8 +1116,8 @@
 .sm-page::-webkit-scrollbar-track { background: transparent; }
 .sm-grid::-webkit-scrollbar-thumb,
 .sm-page::-webkit-scrollbar-thumb { background: var(--sm-accent-wash); }
-.sm-grid::-webkit-scrollbar-thumb:hover,
-.sm-page::-webkit-scrollbar-thumb:hover { background: var(--sm-accent-border); }
+.sm-grid:hover::-webkit-scrollbar-thumb,
+.sm-page:hover::-webkit-scrollbar-thumb { background: var(--sm-accent-border); }
 
 /* ─── Playlist Panel (DAR integration) ───────────── */
 /* Shown on the storyline page when a Dynamic Audio playlist is linked.
