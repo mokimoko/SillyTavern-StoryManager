@@ -86,3 +86,12 @@ Use SillyTavern's built-in extension installer:
 - `/storymanager` — Open the Display gallery
 - `/storymanager-modal` — Open the management modal
 - `/storymanager-sidebar` — Open the in-chat sidebar
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
